@@ -1,0 +1,2239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field Goal Seekers 2 — Draft Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --field:#0c1712;
+    --field-deep:#081310;
+    --turf:#2f6b3e;
+    --turf-line: rgba(245,243,238,0.09);
+    --chalk:#f5f3ee;
+    --chalk-dim: rgba(245,243,238,0.55);
+    --amber:#f2a93b;
+    --amber-dim: rgba(242,169,59,0.25);
+    --panel: #12201a;
+    --panel-2: #17281f;
+    --border: rgba(245,243,238,0.10);
+
+    --pos-qb:#e4572e;
+    --pos-rb:#3e9c56;
+    --pos-wr:#2e86ab;
+    --pos-te:#a2668c;
+    --pos-k:#c9a227;
+    --pos-flex:#8a8f8a;
+    --pos-bn:#5c6b64;
+    --pos-dst:#6d5a8a;
+
+    --font-display:'Anton', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(63,124,74,0.18), transparent 60%),
+      repeating-linear-gradient(90deg, var(--field) 0px, var(--field) 78px, var(--field-deep) 78px, var(--field-deep) 80px),
+      var(--field);
+    color:var(--chalk);
+    font-family:var(--font-body);
+    min-height:100vh;
+  }
+  ::selection{ background:var(--amber); color:#0c1712; }
+
+  a{color:inherit;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 28px;
+    border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg, rgba(8,19,16,0.9), rgba(8,19,16,0.6));
+    position:sticky; top:0; z-index:40;
+    backdrop-filter: blur(6px);
+  }
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .brand .yard-badge{
+    width:40px;height:40px; border-radius:50%;
+    border:2px solid var(--amber);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); color:var(--amber); font-size:15px;
+    letter-spacing:0.5px;
+  }
+  .brand h1{
+    font-family:var(--font-display); font-weight:400; letter-spacing:1.5px;
+    font-size:22px; margin:0; text-transform:uppercase;
+  }
+  .brand .sub{ font-size:11px; color:var(--chalk-dim); font-family:var(--font-mono); letter-spacing:1px; margin-top:2px;}
+  .topnav{ display:flex; gap:8px; }
+  .topnav a{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:0.5px;
+    text-decoration:none; color:var(--chalk-dim);
+    padding:8px 14px; border-radius:20px; border:1px solid var(--border);
+    transition:all .15s ease;
+  }
+  .topnav a:hover, .topnav a.active{ color:var(--field-deep); background:var(--amber); border-color:var(--amber); }
+
+  /* ---------- Account / login ---------- */
+  .account-area{ display:flex; align-items:center; gap:10px; }
+  .account-badge{
+    display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:12px;
+    color:var(--chalk-dim);
+  }
+  .account-badge b{ color:var(--amber); }
+  .account-badge .role-tag{
+    font-size:10px; padding:2px 8px; border-radius:8px; background:var(--panel-2); border:1px solid var(--border);
+    text-transform:uppercase; letter-spacing:0.5px;
+  }
+  .account-badge .role-tag.admin{ background:var(--amber); color:#0c1712; border-color:var(--amber); }
+  .logout-link, .login-open-btn{
+    font-family:var(--font-mono); font-size:11.5px; background:none; border:1px solid var(--border);
+    color:var(--chalk-dim); padding:7px 14px; border-radius:16px; cursor:pointer;
+  }
+  .logout-link:hover, .login-open-btn:hover{ border-color:var(--amber); color:var(--amber); }
+
+  .login-modal-backdrop{
+    position:fixed; inset:0; z-index:250; display:flex; align-items:center; justify-content:center;
+    background:rgba(6,12,10,0.82); backdrop-filter: blur(6px);
+  }
+  .login-modal-backdrop.hidden{ display:none; }
+  .login-modal{
+    position:relative; background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    padding:32px; width:360px; max-width:90vw;
+  }
+  .login-modal h3{ font-family:var(--font-display); font-weight:400; font-size:20px; margin:0 0 6px 0; letter-spacing:0.5px; }
+  .login-error{ font-family:var(--font-mono); font-size:11.5px; color:#e4572e; margin-top:10px; min-height:14px; }
+  .login-team-confirm{
+    background:var(--panel-2); border:1px solid var(--amber); border-radius:10px; padding:16px; text-align:center;
+    font-weight:700; font-size:16px; margin-top:6px;
+  }
+
+  /* ---------- On the clock strip ---------- */
+  .clock-strip{
+    display:flex; align-items:center; gap:12px;
+    padding:10px 28px; background:var(--panel-2); border-bottom:1px solid var(--border);
+    font-family:var(--font-mono); font-size:13px;
+  }
+  .clock-strip .dot{ width:9px;height:9px;border-radius:50%; background:var(--amber); animation:pulse 1.4s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.25;} }
+  .clock-strip b{ color:var(--amber); font-weight:600; }
+  .pick-clock-badge{
+    margin-left:auto; font-family:var(--font-mono); font-weight:700; font-size:13px;
+    padding:5px 12px; border-radius:14px; background:var(--panel); border:1px solid var(--border); color:var(--amber);
+    letter-spacing:0.5px;
+  }
+  .pick-clock-badge.low{ color:#e4572e; border-color:#e4572e; animation:pulse 0.8s infinite; }
+  .pick-clock-badge.runoff{ color:#fff; background:#e4572e; border-color:#e4572e; font-weight:800; animation:pulse 0.4s infinite; }
+  .pick-clock-badge.paused{ color:var(--chalk-dim); border-color:var(--border); animation:none; }
+  .pick-clock-pause{
+    margin-left:auto; font-family:var(--font-mono); font-size:13px; line-height:1;
+    background:var(--panel); border:1px solid var(--border); color:var(--chalk-dim);
+    padding:6px 10px; border-radius:14px; cursor:pointer;
+  }
+  .pick-clock-pause:hover{ border-color:var(--amber); color:var(--amber); }
+  .pick-clock-pause + .pick-clock-badge{ margin-left:8px; }
+  .round-clock-slot{ justify-self:end; display:flex; align-items:center; }
+  .round-clock-slot .pick-clock-badge{ margin-left:8px; }
+
+  /* ---------- Tabs ---------- */
+  .tabs{
+    display:flex; gap:6px; padding:16px 28px 0 28px;
+  }
+  .tab-btn{
+    font-family:var(--font-mono); font-size:12.5px; letter-spacing:0.6px;
+    background:none; border:1px solid var(--border); color:var(--chalk-dim);
+    padding:10px 18px; border-radius:10px 10px 0 0; cursor:pointer;
+    border-bottom:none; text-transform:uppercase;
+  }
+  .tab-btn.active{ background:var(--panel); color:var(--chalk); border-color:var(--border); }
+  .tab-panel{ display:none; padding:0 28px 60px 28px; }
+  .tab-panel.active{ display:block; }
+
+  .panel-inner{
+    background:var(--panel); border:1px solid var(--border); border-radius:0 12px 12px 12px;
+    padding:24px; min-height:60vh;
+  }
+
+  /* ---------- Full draft board ---------- */
+  .board-toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;}
+  .board-toolbar h2{ font-family:var(--font-display); font-weight:400; letter-spacing:1px; margin:0; font-size:20px;}
+  .btn{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:0.4px;
+    background:var(--panel-2); border:1px solid var(--border); color:var(--chalk);
+    padding:9px 16px; border-radius:8px; cursor:pointer; transition:.15s;
+  }
+  .btn:hover{ border-color:var(--amber); color:var(--amber); }
+  .btn.primary{ background:var(--amber); color:#0c1712; border-color:var(--amber); font-weight:600;}
+  .btn.primary:hover{ opacity:.9; color:#0c1712;}
+
+  .board-scroll{ overflow-x:auto; padding-bottom:8px; }
+  .board-grid{ display:grid; grid-auto-rows:auto; min-width:1400px; }
+  .board-cols-header{ display:grid; grid-template-columns: 64px repeat(12, 1fr); gap:6px; margin-bottom:6px; position:sticky; top:0; }
+  .col-head{
+    font-family:var(--font-mono); font-size:11px; text-align:center; color:var(--chalk-dim);
+    padding:8px 4px; border-bottom:2px solid var(--turf); text-transform:uppercase; letter-spacing:0.4px;
+  }
+  .col-head.corner{ border-bottom:none; }
+  .round-row{ display:grid; grid-template-columns: 64px repeat(12, 1fr); gap:6px; margin-bottom:6px; align-items:stretch; }
+  .round-label{
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-size:11px; color:var(--amber);
+    border-right:1px dashed var(--turf-line);
+  }
+  .round-label small{ color:var(--chalk-dim); display:block; font-size:9px; margin-top:2px;}
+
+  .tile{
+    position:relative; background:var(--panel-2); border:1px solid var(--border); border-radius:8px;
+    padding:8px 8px 10px 8px; min-height:78px; cursor:pointer; transition:.15s;
+    display:flex; flex-direction:column; justify-content:space-between;
+  }
+  .tile:hover{ border-color:var(--amber); transform:translateY(-2px); }
+  .tile.empty{ opacity:.35; border-style:dashed; cursor:default; }
+  .tile.empty:hover{ transform:none; border-color:var(--border); }
+  .tile.on-clock{ opacity:1; border-color:var(--amber); box-shadow:0 0 0 1px var(--amber), 0 0 18px var(--amber-dim); }
+  .tile .pick-no{ font-family:var(--font-mono); font-size:10px; color:var(--chalk-dim); }
+  .tile .pos-tag{
+    position:absolute; top:6px; right:6px; font-family:var(--font-display); font-weight:400;
+    font-size:14px; padding:2px 6px; border-radius:5px; color:#0c1712; letter-spacing:0.5px;
+  }
+  .tile .pname{ font-family:var(--font-body); font-weight:700; font-size:12.5px; line-height:1.15; margin-top:14px; }
+  .tile .pteam{ font-family:var(--font-mono); font-size:10px; color:var(--chalk-dim); margin-top:auto; overflow-wrap:anywhere; }
+
+  .pos-QB{ background:var(--pos-qb); } .pos-RB{ background:var(--pos-rb); }
+  .pos-WR{ background:var(--pos-wr); } .pos-TE{ background:var(--pos-te); }
+  .pos-K{ background:var(--pos-k); } .pos-FLEX{ background:var(--pos-flex); } .pos-DST{ background:var(--pos-dst); }
+
+  /* ---------- Round overlay ---------- */
+  .round-overlay{
+    position:fixed; inset:0; z-index:100; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; padding:40px 0; background:rgba(6,12,10,0.72); backdrop-filter: blur(3px);
+  }
+  .round-overlay.hidden{ display:none; }
+  .round-overlay .backdrop-board{ position:absolute; inset:0; overflow:hidden; opacity:.35; filter:blur(2px) saturate(.7); pointer-events:none; }
+  .round-head{
+    display:grid; grid-template-columns: 1fr auto 1fr; align-items:center; gap:20px;
+    width:100%; max-width:1400px; margin-bottom:26px; z-index:2; position:relative;
+  }
+  .round-title-block{ text-align:center; }
+  .round-title-block h2{ font-family:var(--font-display); font-weight:400; font-size:48px; margin:0; letter-spacing:2px; color:var(--amber); }
+  .round-title-block p{ font-family:var(--font-mono); font-size:13px; color:var(--chalk-dim); margin:4px 0 0 0; }
+  .close-overlay{
+    justify-self:start; display:inline-flex; align-items:center; gap:8px; z-index:5;
+    font-family:var(--font-mono); font-size:13px; font-weight:600; background:var(--panel-2);
+    border:1.5px solid var(--amber); color:var(--amber); padding:11px 18px; border-radius:24px; cursor:pointer;
+  }
+  .close-overlay:hover{ background:var(--amber); color:#0c1712; }
+  .close-overlay .arrow{ font-size:16px; line-height:1; }
+
+  .carousel-wrap{ position:relative; width:92vw; max-width:1800px; z-index:2; display:flex; justify-content:center; }
+  .carousel{
+    display:flex; gap:26px; overflow-x:auto; scroll-snap-type:x mandatory; padding:40px 0;
+    cursor:grab; width:100%;
+  }
+  .carousel:active{ cursor:grabbing; }
+  .rtile{
+    scroll-snap-align:center; flex:0 0 300px; background:var(--panel-2); border:1px solid var(--border);
+    border-radius:16px; padding:22px 22px 24px 22px; opacity:.35; transform:scale(.75); transition:all .25s ease;
+    position:relative; min-height:285px; display:flex; flex-direction:column; justify-content:space-between;
+  }
+  .rtile.current{
+    opacity:1; transform:scale(1.32); z-index:5; border-color:var(--amber);
+    box-shadow:0 18px 56px rgba(0,0,0,0.55), 0 0 0 2px var(--amber);
+  }
+  .rtile .team-hover{
+    position:absolute; top:-32px; left:0; right:0; text-align:center;
+    font-family:var(--font-mono); font-size:14px; color:var(--chalk-dim); letter-spacing:0.4px;
+  }
+  .rtile.current .team-hover{ color:var(--amber); font-weight:600; font-size:16px; }
+  .rtile .pick-no{ font-family:var(--font-mono); font-size:15px; color:var(--chalk-dim); }
+  .rtile.current .pick-no{ font-size:17px; color:var(--chalk); }
+  .rtile .pos-tag{
+    position:absolute; top:20px; right:20px; font-family:var(--font-display); font-weight:400;
+    font-size:24px; padding:4px 11px; border-radius:8px; color:#0c1712;
+  }
+  .rtile.current .pos-tag{ font-size:29px; padding:5px 14px; }
+  .rtile .pname{ font-size:23px; font-weight:700; margin-top:36px; line-height:1.2; }
+  .rtile.current .pname{ font-size:32px; margin-top:44px; }
+  .rtile .pteam{ font-family:var(--font-mono); font-size:15px; color:var(--chalk-dim); overflow-wrap:anywhere; }
+  .rtile.current .pteam{ font-size:17px; }
+  .rtile.empty{ opacity:.3; border-style:dashed; }
+  .rtile.empty .pname{ color:var(--chalk-dim); font-weight:600; font-size:19px; }
+
+  .carousel-hint{ text-align:center; font-family:var(--font-mono); font-size:11px; color:var(--chalk-dim); margin-top:6px; z-index:2; position:relative;}
+
+  /* ---------- Player list + queue ---------- */
+  .pl-layout{ display:grid; grid-template-columns: 1fr 320px; gap:22px; align-items:start; }
+  .pl-controls{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .filter-chip{
+    font-family:var(--font-mono); font-size:11.5px; padding:7px 14px; border-radius:20px;
+    border:1px solid var(--border); background:var(--panel-2); color:var(--chalk-dim); cursor:pointer;
+  }
+  .filter-chip.active{ color:#0c1712; border-color:var(--amber); }
+  .filter-chip[data-pos="ALL"].active{ background:var(--chalk); }
+  .filter-chip[data-pos="QB"].active{ background:var(--pos-qb); }
+  .filter-chip[data-pos="RB"].active{ background:var(--pos-rb); }
+  .filter-chip[data-pos="WR"].active{ background:var(--pos-wr); }
+  .filter-chip[data-pos="TE"].active{ background:var(--pos-te); }
+  .filter-chip[data-pos="K"].active{ background:var(--pos-k); }
+  .filter-chip[data-pos="DST"].active{ background:var(--pos-dst); color:var(--chalk); }
+  .avail-toggle{
+    display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:12px;
+    color:var(--chalk-dim); margin-bottom:14px; cursor:pointer; user-select:none;
+  }
+  .avail-toggle input{ accent-color:var(--amber); width:14px; height:14px; }
+  .queue-team-select{
+    width:100%; background:var(--panel); color:var(--chalk); border:1px solid var(--border); border-radius:8px;
+    padding:9px 10px; font-family:var(--font-mono); font-size:12.5px; margin-bottom:16px;
+  }
+
+  table.plist{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.plist thead th{
+    text-align:left; font-family:var(--font-mono); font-size:10.5px; color:var(--chalk-dim);
+    text-transform:uppercase; letter-spacing:0.5px; padding:8px 10px; border-bottom:1px solid var(--border);
+  }
+  table.plist tbody td{ padding:9px 10px; border-bottom:1px solid var(--border); }
+  table.plist tbody tr:hover{ background:rgba(245,243,238,0.03); }
+  .rank-cell{ font-family:var(--font-mono); color:var(--chalk-dim); width:36px; }
+  .pos-pill{
+    display:inline-block; font-family:var(--font-mono); font-size:10.5px; font-weight:600;
+    color:#0c1712; padding:2px 8px; border-radius:10px;
+  }
+  .add-q-btn{
+    font-family:var(--font-mono); font-size:11px; background:none; border:1px solid var(--border);
+    color:var(--chalk-dim); padding:5px 11px; border-radius:14px; cursor:pointer;
+  }
+  .add-q-btn:hover{ border-color:var(--amber); color:var(--amber); }
+  .add-q-btn.added{ background:var(--amber); color:#0c1712; border-color:var(--amber); }
+  .draft-btn{
+    font-family:var(--font-mono); font-size:11px; font-weight:600; background:var(--turf); border:1px solid var(--turf);
+    color:var(--chalk); padding:5px 13px; border-radius:14px; cursor:pointer;
+  }
+  .draft-btn:hover:not(:disabled){ background:var(--amber); border-color:var(--amber); color:#0c1712; }
+  .draft-btn:disabled{ opacity:.3; cursor:default; }
+
+  /* Queue sidebar */
+  .queue-panel{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:12px; padding:16px;
+    position:sticky; top:180px;
+  }
+  .queue-panel h3{ font-family:var(--font-display); font-weight:400; font-size:16px; margin:0 0 12px 0; letter-spacing:0.5px;}
+  .queue-toggle{ display:flex; gap:6px; margin-bottom:14px; }
+  .queue-toggle button{
+    flex:1; font-family:var(--font-mono); font-size:11px; padding:7px 0; border-radius:8px;
+    border:1px solid var(--border); background:none; color:var(--chalk-dim); cursor:pointer;
+  }
+  .queue-toggle button.active{ background:var(--amber); color:#0c1712; border-color:var(--amber); }
+  .queue-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; max-height:340px; overflow-y:auto; }
+  .queue-item{
+    display:flex; align-items:center; gap:8px; background:var(--panel); border:1px solid var(--border);
+    border-radius:8px; padding:8px 10px; font-size:12.5px;
+  }
+  .queue-item .qnum{ font-family:var(--font-mono); color:var(--chalk-dim); width:18px; }
+  .queue-item .qname{ flex:1; }
+  .queue-item .qpos{ font-family:var(--font-mono); font-size:10px; padding:1px 6px; border-radius:8px; color:#0c1712; }
+  .qmove{ background:none; border:none; color:var(--chalk-dim); cursor:pointer; font-size:12px; padding:2px 4px; }
+  .qmove:hover{ color:var(--amber); }
+  .qremove{ background:none; border:none; color:var(--chalk-dim); cursor:pointer; font-size:13px; }
+  .qremove:hover{ color:#e4572e; }
+  .empty-note{ font-family:var(--font-mono); font-size:11.5px; color:var(--chalk-dim); text-align:center; padding:20px 0; }
+
+  .byround-table{ width:100%; border-collapse:collapse; font-size:12px; }
+  .byround-table th{ text-align:left; font-family:var(--font-mono); font-size:10px; color:var(--chalk-dim); padding:6px 4px; }
+  .byround-table td{ padding:5px 4px; border-top:1px solid var(--border); }
+  .byround-table select{
+    width:100%; background:var(--panel); color:var(--chalk); border:1px solid var(--border); border-radius:6px;
+    font-family:var(--font-mono); font-size:11px; padding:4px 6px;
+  }
+
+  /* ---------- My team ---------- */
+  .team-select{ margin-bottom:18px; }
+  .team-select select{
+    background:var(--panel-2); color:var(--chalk); border:1px solid var(--border); border-radius:8px;
+    padding:9px 14px; font-family:var(--font-mono); font-size:12.5px;
+  }
+  .roster-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:14px; }
+  .slot{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:14px;
+    min-height:100px; display:flex; flex-direction:column; justify-content:space-between;
+  }
+  .slot.filled{ border-left:4px solid var(--amber); }
+  .slot.open{ border-style:dashed; opacity:.85; }
+  .slot-pos-badge{
+    display:inline-block; align-self:flex-start; font-family:var(--font-display); font-weight:400;
+    font-size:19px; letter-spacing:0.5px; padding:5px 13px; border-radius:8px; color:#0c1712; margin-bottom:4px;
+  }
+  .slot-sub{ font-family:var(--font-mono); font-size:9.5px; color:var(--chalk-dim); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px; }
+  .slot .slot-name{ font-weight:700; font-size:14px; margin-top:6px; }
+  .slot .slot-name.open{ color:var(--chalk-dim); font-weight:500; font-style:italic; }
+  .slot .slot-team{ font-family:var(--font-mono); font-size:10.5px; color:var(--chalk-dim); margin-top:4px; }
+  .pos-BN{ background:var(--pos-bn); }
+  .section-label{ font-family:var(--font-mono); font-size:11px; color:var(--amber); letter-spacing:1px; margin:22px 0 10px 0; text-transform:uppercase; }
+  .section-label:first-child{ margin-top:0; }
+
+  @media (max-width: 900px){
+    .pl-layout{ grid-template-columns:1fr; }
+    .queue-panel{ position:static; }
+  }
+
+  /* ---------- Admin tab ---------- */
+  .admin-wrap{ max-width:1100px; margin:0 auto; display:flex; flex-direction:column; gap:22px; }
+  .a-card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:24px 26px; }
+  .a-card h2{ font-family:var(--font-display); font-weight:400; font-size:20px; letter-spacing:0.8px; margin:0 0 4px 0; }
+  .a-desc{ font-family:var(--font-mono); font-size:11.5px; color:var(--chalk-dim); margin:0 0 20px 0; }
+  label.field-label{ display:block; font-family:var(--font-mono); font-size:11px; color:var(--chalk-dim); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;}
+  .a-card input[type=text], .a-card input[type=number]{
+    background:var(--panel-2); border:1px solid var(--border); color:var(--chalk); border-radius:8px;
+    padding:10px 12px; font-family:var(--font-body); font-size:14px; width:100%;
+  }
+  .a-card input:focus{ outline:none; border-color:var(--amber); }
+  .a-row{ display:flex; gap:16px; flex-wrap:wrap; }
+  .a-row > div{ flex:1; min-width:180px; }
+
+  .order-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .order-item{ display:flex; align-items:center; gap:12px; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:10px 14px; }
+  .order-item .num{ font-family:var(--font-mono); color:var(--amber); width:22px; }
+  .order-item .name{ flex:1; font-weight:600; }
+  .order-item .drag-handle{ cursor:grab; color:var(--chalk-dim); font-size:14px; }
+  .order-item button{ background:none; border:none; color:var(--chalk-dim); cursor:pointer; font-size:12px; padding:4px 8px; }
+  .order-item button:hover{ color:var(--amber); }
+
+  .roster-config{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:14px; margin-bottom:20px;}
+  .rc-item{ background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:14px; }
+  .rc-item .pos-pill{ display:inline-block; font-family:var(--font-mono); font-size:11px; font-weight:600; color:#0c1712; padding:2px 9px; border-radius:10px; margin-bottom:8px;}
+  .rc-item input{ width:100%; text-align:center; font-family:var(--font-mono); font-size:16px; padding:8px;}
+  .rc-item.pos-QB .pos-pill{ background:var(--pos-qb); } .rc-item.pos-RB .pos-pill{ background:var(--pos-rb); }
+  .rc-item.pos-WR .pos-pill{ background:var(--pos-wr); } .rc-item.pos-TE .pos-pill{ background:var(--pos-te); }
+  .rc-item.pos-K .pos-pill{ background:var(--pos-k); } .rc-item.pos-FLEX .pos-pill{ background:var(--pos-flex); }
+  .rc-item.pos-DST .pos-pill{ background:var(--pos-dst); }
+
+  .rounds-control{ display:flex; align-items:center; gap:16px; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:16px 20px; }
+  .stepper{ display:flex; align-items:center; gap:14px; }
+  .stepper button{ width:34px; height:34px; border-radius:50%; background:var(--panel); border:1px solid var(--border); color:var(--chalk); font-size:16px; cursor:pointer; }
+  .stepper button:hover{ border-color:var(--amber); color:var(--amber); }
+  .stepper .count{ font-family:var(--font-display); font-size:26px; color:var(--amber); min-width:36px; text-align:center; }
+  .rounds-note{ font-family:var(--font-mono); font-size:11.5px; color:var(--chalk-dim); }
+  .bench-note b{ color:var(--amber); }
+
+  .dropzone{ border:2px dashed var(--border); border-radius:12px; padding:34px; text-align:center; cursor:pointer; transition:.15s; }
+  .dropzone:hover, .dropzone.drag{ border-color:var(--amber); background:rgba(242,169,59,0.05); }
+  .dropzone .icon{ font-size:28px; margin-bottom:10px; }
+  .dropzone .main-txt{ font-weight:600; }
+  .dropzone .sub-txt{ font-family:var(--font-mono); font-size:11.5px; color:var(--chalk-dim); margin-top:6px; }
+  input[type=file]{ display:none; }
+
+  table.preview{ width:100%; border-collapse:collapse; font-size:12.5px; margin-top:18px; }
+  table.preview thead th{ text-align:left; font-family:var(--font-mono); font-size:10.5px; color:var(--chalk-dim); text-transform:uppercase; padding:8px 10px; border-bottom:1px solid var(--border); }
+  table.preview tbody td{ padding:8px 10px; border-bottom:1px solid var(--border); }
+  .preview-meta{ font-family:var(--font-mono); font-size:11.5px; color:var(--amber); margin-top:14px; }
+
+  .save-bar{ display:flex; justify-content:flex-end; gap:10px; }
+  .music-list{ display:flex; flex-direction:column; gap:8px; }
+  .music-row{
+    display:flex; align-items:center; gap:12px; background:var(--panel-2); border:1px solid var(--border);
+    border-radius:8px; padding:10px 14px; flex-wrap:wrap;
+  }
+  .music-row .m-team{ font-weight:600; font-size:13px; width:170px; flex-shrink:0; }
+  .music-row .m-file-label{
+    font-family:var(--font-mono); font-size:11px; background:var(--panel); border:1px solid var(--border);
+    color:var(--chalk-dim); padding:6px 12px; border-radius:14px; cursor:pointer;
+  }
+  .music-row .m-file-label:hover{ border-color:var(--amber); color:var(--amber); }
+  .music-row input[type=file]{ display:none; }
+  .music-row .m-filename{ font-family:var(--font-mono); font-size:11px; color:var(--chalk-dim); flex:1; min-width:100px; }
+  .music-row .m-btn{
+    background:none; border:1px solid var(--border); color:var(--chalk-dim); border-radius:12px;
+    padding:5px 10px; font-size:11px; cursor:pointer; font-family:var(--font-mono);
+  }
+  .music-row .m-btn:hover{ border-color:var(--amber); color:var(--amber); }
+  .music-row .m-btn.remove:hover{ border-color:#e4572e; color:#e4572e; }
+  .draft-type-options{ display:flex; flex-direction:column; gap:10px; }
+  .dt-option{
+    display:flex; align-items:flex-start; gap:12px; background:var(--panel-2); border:1px solid var(--border);
+    border-radius:10px; padding:14px 16px; cursor:pointer;
+  }
+  .dt-option.active{ border-color:var(--amber); background:rgba(242,169,59,0.06); }
+  .dt-option input{ margin-top:4px; accent-color:var(--amber); }
+  .dt-option b{ display:block; font-size:13.5px; margin-bottom:3px; }
+  .dt-option span{ font-family:var(--font-mono); font-size:11.5px; color:var(--chalk-dim); line-height:1.4; }
+  .custom-rounds-list{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:10px;
+    max-height:260px; overflow-y:auto; padding:4px;
+  }
+  .cr-item{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:9px 12px;
+  }
+  .cr-item .cr-round{ font-family:var(--font-mono); font-size:11.5px; color:var(--chalk-dim); }
+  .cr-dir-btn{
+    font-family:var(--font-mono); font-size:11px; font-weight:600; border-radius:12px; padding:5px 11px;
+    border:1px solid var(--border); background:none; color:var(--chalk-dim); cursor:pointer;
+  }
+  .cr-dir-btn.forward{ border-color:var(--turf); color:var(--turf); }
+  .cr-dir-btn.reverse{ border-color:var(--amber); color:var(--amber); }
+  .apply-bar{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-top:20px; }
+  .apply-note{ font-family:var(--font-mono); font-size:11px; color:var(--chalk-dim); }
+
+  .admin-email-row input{
+    width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--chalk); border-radius:8px;
+    padding:10px 12px; font-family:var(--font-body); font-size:14px;
+  }
+  .admin-email-row input:focus{ outline:none; border-color:var(--amber); }
+  .owner-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+  .owner-row{
+    display:flex; align-items:center; gap:12px; background:var(--panel-2); border:1px solid var(--border);
+    border-radius:8px; padding:10px 14px; flex-wrap:wrap;
+  }
+  .owner-row .o-team{ font-weight:600; font-size:13px; width:170px; flex-shrink:0; }
+  .owner-row input[type=text]{
+    flex:1; min-width:180px; background:var(--panel); border:1px solid var(--border); color:var(--chalk);
+    border-radius:8px; padding:7px 10px; font-family:var(--font-mono); font-size:12px;
+  }
+  .owner-row input[type=text]:focus{ outline:none; border-color:var(--amber); }
+  .owner-row .o-status{ font-family:var(--font-mono); font-size:10px; padding:3px 9px; border-radius:10px; white-space:nowrap; }
+  .owner-row .o-status.set{ background:rgba(63,124,74,0.25); color:var(--turf); }
+  .owner-row .o-status.unset{ background:var(--panel); color:var(--chalk-dim); border:1px solid var(--border); }
+  .owner-row .m-btn{
+    background:none; border:1px solid var(--border); color:var(--chalk-dim); border-radius:12px;
+    padding:5px 10px; font-size:11px; cursor:pointer; font-family:var(--font-mono); white-space:nowrap;
+  }
+  .owner-row .m-btn:hover{ border-color:var(--amber); color:var(--amber); }
+  .undo-box{
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:16px 20px;
+  }
+  .undo-info{ font-family:var(--font-mono); font-size:12.5px; color:var(--chalk-dim); }
+  .undo-info b{ color:var(--amber); }
+  #undoBtn{ background:none; border:1.5px solid #e4572e; color:#e4572e; }
+  #undoBtn:hover:not(:disabled){ background:#e4572e; color:var(--chalk); }
+  #undoBtn:disabled{ opacity:.3; cursor:default; border-color:var(--border); color:var(--chalk-dim); }
+  .clock-settings{ display:flex; gap:24px; align-items:flex-end; flex-wrap:wrap; margin-top:10px; }
+  .clock-toggle{ display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:12.5px; color:var(--chalk); cursor:pointer; padding-bottom:10px; }
+  .clock-toggle input{ accent-color:var(--amber); width:15px; height:15px; }
+  .clock-seconds-row{ display:flex; flex-direction:column; gap:6px; width:150px; }
+  .toast{
+    position:fixed; bottom:24px; right:24px; background:var(--amber); color:#0c1712; font-family:var(--font-mono);
+    font-size:12.5px; font-weight:600; padding:12px 18px; border-radius:8px; opacity:0; transform:translateY(10px);
+    transition:.25s; pointer-events:none; z-index:200;
+  }
+  .toast.show{ opacity:1; transform:translateY(0); }
+
+  /* ---------- Draft pick announcement modal ---------- */
+  .pick-modal-backdrop{
+    position:fixed; inset:0; z-index:300; display:flex; align-items:center; justify-content:center;
+    background:rgba(6,12,10,0.82); backdrop-filter: blur(6px);
+    opacity:0; pointer-events:none; transition:opacity .25s ease;
+  }
+  .pick-modal-backdrop.show{ opacity:1; pointer-events:auto; }
+  .pick-modal-backdrop.hidden{ display:none; }
+  .pick-modal{
+    position:relative; background:var(--panel-2); border:2px solid var(--amber); border-radius:22px;
+    padding:48px 64px 40px 64px; text-align:center; min-width:380px; max-width:90vw;
+    box-shadow:0 30px 80px rgba(0,0,0,0.6), 0 0 60px var(--amber-dim);
+    transform:scale(.85); transition:transform .28s cubic-bezier(.2,1.4,.4,1);
+  }
+  .pick-modal-backdrop.show .pick-modal{ transform:scale(1); }
+  .pm-eyebrow{ font-family:var(--font-mono); font-size:12.5px; letter-spacing:1.5px; color:var(--chalk-dim); margin-bottom:14px; }
+  .pm-team{ font-family:var(--font-display); font-size:22px; letter-spacing:1px; color:var(--amber); margin-bottom:18px; text-transform:uppercase; }
+  .pm-pos{
+    display:inline-block; font-family:var(--font-display); font-size:22px; padding:6px 18px; border-radius:10px;
+    color:#0c1712; margin-bottom:18px; letter-spacing:1px;
+  }
+  .pm-name{ font-family:var(--font-body); font-weight:800; font-size:44px; line-height:1.1; margin-bottom:10px; }
+  .pm-nfl{ font-family:var(--font-mono); font-size:14px; color:var(--chalk-dim); letter-spacing:1px; }
+  .pm-close{
+    position:absolute; top:16px; right:18px; background:none; border:none; color:var(--chalk-dim);
+    font-size:16px; cursor:pointer;
+  }
+  .pm-close:hover{ color:var(--amber); }
+  @media (max-width:600px){
+    .pick-modal{ padding:36px 28px 30px 28px; }
+    .pm-name{ font-size:32px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="yard-badge">FG2</div>
+      <div>
+        <h1>Field Goal Seekers 2</h1>
+        <div class="sub">2026 PRESEASON DRAFT · LOOK &amp; FEEL PROTOTYPE</div>
+      </div>
+    </div>
+    <div class="account-area" id="accountArea"></div>
+  </div>
+
+  <div class="login-modal-backdrop hidden" id="loginModalBackdrop">
+    <div class="login-modal">
+      <button class="pm-close" id="loginModalClose">✕</button>
+      <h3 id="loginStepTitle">Log In</h3>
+      <div id="loginStepEmail">
+        <p class="a-desc">Enter the email address your commissioner used to invite you.</p>
+        <input type="text" id="loginEmailInput" placeholder="you@email.com" class="queue-team-select" style="margin-bottom:12px;">
+        <button class="btn primary" id="loginContinueBtn" style="width:100%;">Continue</button>
+        <div class="login-error" id="loginError"></div>
+      </div>
+      <div id="loginStepConfirm" style="display:none;">
+        <p class="a-desc">Is this your team?</p>
+        <div class="login-team-confirm" id="loginTeamConfirm"></div>
+        <button class="btn primary" id="loginConfirmBtn" style="width:100%; margin-top:14px;">Yes, log me in</button>
+        <button class="btn" id="loginBackBtn" style="width:100%; margin-top:8px;">← Use a different email</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="clock-strip">
+    <span class="dot"></span>
+    <span>ON THE CLOCK — <b id="clockTeam">Sack Attack</b> · Round <span id="clockRound">4</span>, Pick <span id="clockPick">7</span> (Overall #43)</span>
+  </div>
+
+  <div class="tabs" id="mainTabs">
+    <button class="tab-btn active" data-tab="board">Draft Board</button>
+    <button class="tab-btn" data-tab="players">Player List</button>
+    <button class="tab-btn" data-tab="myteam">My Team</button>
+    <button class="tab-btn" data-tab="admin" id="adminTabBtn">Admin</button>
+  </div>
+
+  <!-- ================= DRAFT BOARD TAB ================= -->
+  <div class="tab-panel active" id="tab-board">
+    <div class="panel-inner">
+      <div class="board-toolbar">
+        <h2>Full Draft Board</h2>
+        <button class="btn primary" id="expandCurrentBtn">Expand Current Round →</button>
+      </div>
+      <div class="board-scroll">
+        <div class="board-grid" id="boardGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PLAYER LIST TAB ================= -->
+  <div class="tab-panel" id="tab-players">
+    <div class="panel-inner">
+      <div class="pl-layout">
+        <div>
+          <div class="board-toolbar">
+            <h2>Rankings — Player List</h2>
+          </div>
+          <div class="pl-controls" id="posFilters"></div>
+          <label class="avail-toggle">
+            <input type="checkbox" id="hideDraftedToggle">
+            Show only available players
+          </label>
+          <table class="plist">
+            <thead>
+              <tr><th>#</th><th>Player</th><th>Pos</th><th>Team</th><th>Status</th><th></th><th></th></tr>
+            </thead>
+            <tbody id="playerTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="queue-panel">
+          <label class="field-label">Queueing as</label>
+          <select id="queueTeamSelect" class="queue-team-select"></select>
+          <h3>Queue</h3>
+          <div class="queue-toggle">
+            <button class="active" data-qview="total">Total Queue</button>
+            <button data-qview="byposition">By Position</button>
+          </div>
+          <div id="queueTotalView">
+            <ul class="queue-list" id="queueList"></ul>
+            <div class="empty-note" id="queueEmptyNote">Add players from the list to build this team's queue.</div>
+          </div>
+          <div id="queueByPosView" style="display:none;">
+            <table class="byround-table">
+              <thead><tr><th>Round</th><th>Preferred Pos</th></tr></thead>
+              <tbody id="byRoundBody"></tbody>
+            </table>
+            <div class="empty-note" style="padding-top:12px;">Auto-draft grabs the <i>next queued player</i> at that position — not necessarily the top-ranked one. If the queue is empty, auto-draft takes the best available player overall.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MY TEAM TAB ================= -->
+  <div class="tab-panel" id="tab-myteam">
+    <div class="panel-inner">
+      <div class="team-select">
+        <label style="font-family:var(--font-mono); font-size:11px; color:var(--chalk-dim); margin-right:10px;">VIEWING ROSTER FOR</label>
+        <select id="teamSelect"></select>
+        <button class="btn" id="emailRosterBtn" style="float:right;">✉ Email Roster</button>
+      </div>
+      <div id="rosterOutput"></div>
+    </div>
+  </div>
+
+  <!-- ================= ADMIN TAB ================= -->
+  <div class="tab-panel" id="tab-admin">
+    <div class="admin-wrap">
+
+      <div class="a-card">
+        <h2>Draft Controls</h2>
+        <p class="a-desc">Made a mistake? You can only undo the single most recent pick — undoing further back would knock every pick after it out of sync.</p>
+        <div class="undo-box" id="undoBox">
+          <div id="undoInfo" class="undo-info">No picks made yet.</div>
+          <button class="btn" id="undoBtn" disabled>Undo Last Pick</button>
+        </div>
+
+        <label class="field-label" style="margin-top:22px;">Pick Clock</label>
+        <div class="clock-settings">
+          <label class="clock-toggle">
+            <input type="checkbox" id="clockEnabledInput" checked>
+            Enable pick clock
+          </label>
+          <div class="clock-seconds-row">
+            <label class="field-label">Seconds per pick</label>
+            <input type="number" id="clockSecondsInput" value="90" min="5" max="600">
+          </div>
+        </div>
+        <p class="a-desc" style="margin:10px 0 0 0;">If the team on the clock has no queue set up when time runs out, the pick auto-drafts the best available player.</p>
+      </div>
+
+      <div class="a-card">
+        <h2>Email Draft Board</h2>
+        <p class="a-desc">Sends the full draft board to every owner with an email on file, via Resend, once the backend is connected. To send just one team's roster to its owner instead, use "Email Roster" on that team's page in the My Team tab.</p>
+        <button class="btn primary" id="emailBoardBtn">✉ Email Draft Board to League</button>
+        <span class="apply-note" id="emailBoardNote"></span>
+      </div>
+
+      <div class="a-card">
+        <h2>Voice Announcer <span style="font-family:var(--font-mono); font-size:10.5px; color:var(--chalk-dim); font-weight:400;">(browser voice — test before deciding)</span></h2>
+        <p class="a-desc">This uses your browser's built-in text-to-speech, not a human recording — hit preview and judge for yourself whether it's good enough, or whether we need a real AI voice service instead.</p>
+        <div class="clock-settings">
+          <label class="clock-toggle">
+            <input type="checkbox" id="announcerEnabledInput">
+            Announce every pick automatically
+          </label>
+          <div class="clock-seconds-row" style="width:260px;">
+            <label class="field-label">Voice</label>
+            <select id="announcerVoiceSelect"></select>
+          </div>
+        </div>
+        <div class="apply-bar">
+          <button class="btn primary" id="announcerPreviewBtn">🔊 Preview Announcer</button>
+          <span class="apply-note" id="announcerNote">Loading available voices…</span>
+        </div>
+      </div>
+
+      <div class="a-card">
+        <h2>League Info</h2>
+        <p class="a-desc">Basic details shown across the site.</p>
+        <div class="a-row">
+          <div>
+            <label class="field-label">League Name</label>
+            <input type="text" id="leagueName" value="Field Goal Seekers 2">
+          </div>
+          <div>
+            <label class="field-label"># of Teams</label>
+            <input type="number" id="numTeamsInput" value="12" min="4" max="20">
+          </div>
+        </div>
+      </div>
+
+      <div class="a-card">
+        <h2>Draft Order</h2>
+        <p class="a-desc">Set the pick order for round 1. Drag to reorder, or use the arrows.</p>
+        <ul class="order-list" id="orderList"></ul>
+      </div>
+
+      <div class="a-card">
+        <h2>Draft Type</h2>
+        <p class="a-desc">How the round-1 order above carries through the rest of the draft.</p>
+        <div class="draft-type-options">
+          <label class="dt-option">
+            <input type="radio" name="draftType" value="snake" checked>
+            <div><b>Snake</b><span>Order flips every round — round 2 runs pick 12 → 1, round 3 flips back, and so on.</span></div>
+          </label>
+          <label class="dt-option">
+            <input type="radio" name="draftType" value="linear">
+            <div><b>Linear</b><span>Same order every single round — pick 1 → 12, every round, no flip.</span></div>
+          </label>
+          <label class="dt-option">
+            <input type="radio" name="draftType" value="custom">
+            <div><b>Custom</b><span>Pick which rounds run forward vs. reversed — e.g. a 3rd-round reversal league.</span></div>
+          </label>
+        </div>
+        <div id="customRoundsWrap" style="display:none; margin-top:16px;">
+          <label class="field-label">Per-round direction</label>
+          <div class="custom-rounds-list" id="customRoundsList"></div>
+        </div>
+        <div class="apply-bar">
+          <button class="btn primary" id="applyDraftBtn">Apply Draft Order &amp; Type</button>
+          <span class="apply-note">Rebuilds the mock board with the new order — resets all picks made so far.</span>
+        </div>
+      </div>
+
+      <div class="a-card">
+        <h2>Team Owners <span style="font-family:var(--font-mono); font-size:10.5px; color:var(--chalk-dim); font-weight:400;">(placeholder — real sending comes with Supabase + Resend)</span></h2>
+        <p class="a-desc">Assign each team an owner email. "Send Invite" and "Email Results" don't actually send anything yet — they're here so the flow and layout are ready for when the real backend is wired up. Login matching against these emails <i>does</i> work in this prototype, on this device.</p>
+
+        <label class="field-label">Draft Admin Email</label>
+        <div class="admin-email-row">
+          <input type="text" id="adminEmailInput" placeholder="commissioner@email.com">
+        </div>
+        <p class="a-desc" style="margin:8px 0 20px 0;">Whoever logs in with this email gets full admin access — Undo, pause the clock, and this Admin tab. A commissioner who also owns a team should use a different email for their team's owner slot below.</p>
+
+        <div class="owner-list" id="ownerList"></div>
+
+        <div class="apply-bar">
+          <button class="btn" id="emailAllInvitesBtn">✉ Send Invite to All Owners</button>
+          <button class="btn" id="emailResultsBtn">✉ Email Draft Results to All Owners</button>
+        </div>
+        <span class="apply-note" id="ownerActionNote"></span>
+      </div>
+
+      <div class="a-card">
+        <h2>Roster Requirements</h2>
+        <p class="a-desc">Starting lineup slots per team. Bench spots fill automatically based on total rounds.</p>
+        <div class="roster-config" id="rosterConfig"></div>
+
+        <label class="field-label">Total Rounds (Draft Length)</label>
+        <div class="rounds-control">
+          <div class="stepper">
+            <button id="roundsMinus">−</button>
+            <span class="count" id="roundsCount">15</span>
+            <button id="roundsPlus">+</button>
+          </div>
+          <div class="rounds-note bench-note">
+            <div><b id="starterCount">8</b> starter slots · <b id="benchCount">7</b> bench slots</div>
+            <div>Adjust rounds up or down each season without changing starter requirements.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="a-card">
+        <h2>Team Walk-Up Music</h2>
+        <p class="a-desc">Upload a song per team — it plays automatically as soon as that team is on the clock, and stops the moment their pick is made.</p>
+        <label class="clock-toggle" style="margin-bottom:14px;">
+          <input type="checkbox" id="musicMuteInput">
+          Mute all walk-up music
+        </label>
+        <div class="music-list" id="musicList"></div>
+      </div>
+
+      <div class="a-card">
+        <h2>Rankings Upload</h2>
+        <p class="a-desc">Upload a CSV of player rankings (name, position, team, rank). Typically loaded about a week before draft day.</p>
+        <div class="dropzone" id="dropzone">
+          <div class="icon">⬆</div>
+          <div class="main-txt">Drop CSV here, or click to browse</div>
+          <div class="sub-txt">Expected columns: rank, name, position, team — team can be a short code, a full city/team name, or just the mascot (e.g. "SF", "San Francisco", "Ravens" all work)</div>
+        </div>
+        <input type="file" id="csvInput" accept=".csv">
+        <div id="previewWrap" style="display:none;">
+          <div class="preview-meta" id="previewMeta"></div>
+          <table class="preview">
+            <thead><tr><th>Rank</th><th>Name</th><th>Pos</th><th>Team</th></tr></thead>
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="save-bar">
+        <button class="btn">Reset</button>
+        <button class="btn primary" id="saveBtn">Save League Settings</button>
+      </div>
+
+    </div>
+  </div>
+  <div class="toast" id="toast">Settings saved (prototype — not persisted)</div>
+
+  <audio id="teamMusicPlayer" loop></audio>
+
+  <div class="pick-modal-backdrop hidden" id="pickModalBackdrop">
+    <div class="pick-modal" id="pickModal">
+      <div class="pm-eyebrow">PICK <span id="pmOverall"></span> · ROUND <span id="pmRound"></span>, PICK <span id="pmPickInRound"></span></div>
+      <div class="pm-team" id="pmTeam"></div>
+      <div class="pm-pos" id="pmPos"></div>
+      <div class="pm-name" id="pmName"></div>
+      <div class="pm-nfl" id="pmNfl"></div>
+      <button class="pm-close" id="pmClose">✕</button>
+    </div>
+  </div>
+
+  <!-- ================= ROUND OVERLAY ================= -->
+  <div class="round-overlay hidden" id="roundOverlay">
+    <div class="backdrop-board" id="backdropBoard"></div>
+    <div class="round-head">
+      <button class="close-overlay" id="closeOverlay"><span class="arrow">←</span> Back to Full Board</button>
+      <div class="round-title-block">
+        <h2>ROUND <span id="ovRoundNum"></span></h2>
+        <p>Drag to browse this round's picks · click a tile on the full board to jump to a different round</p>
+      </div>
+      <div class="round-clock-slot">
+        <button class="pick-clock-pause" id="pickClockPauseBtnRound" title="Pause the pick clock" style="display:none;">⏸</button>
+        <span class="pick-clock-badge" id="pickClockDisplayRound"></span>
+      </div>
+    </div>
+    <div class="carousel-wrap">
+      <div class="carousel" id="roundCarousel"></div>
+    </div>
+    <div class="carousel-hint">◄ drag / swipe to see other picks in this round ►</div>
+  </div>
+
+<script>
+/* ============================= SEED DATA ============================= */
+const POS_COLORS = { QB:'var(--pos-qb)', RB:'var(--pos-rb)', WR:'var(--pos-wr)', TE:'var(--pos-te)', K:'var(--pos-k)', FLEX:'var(--pos-flex)' };
+
+const TEAMS = [
+  "Gridiron Ghosts","Blitz Brigade","Red Zone Renegades","Turf Titans",
+  "Hail Mary Heroes","Sack Attack","Pigskin Pirates","End Zone Elites",
+  "Fumble Force","Rushing Rebels","Deep Threats","Goal Line Gang"
+];
+
+/* Draft order & draft type — configured in the Admin tab, drives how the board is built */
+let adminOrder = TEAMS.slice();     // round-1 pick order, as team names, editable in Admin
+let draftType = 'snake';            // 'snake' | 'linear' | 'custom'
+let customDirections = {};          // round -> 'forward' | 'reverse', used only when draftType === 'custom'
+let pickHistory = [];               // stack of completed picks, for single-step undo
+
+let teamQueues = {};                // teamIdx -> ordered array of queued player ids (each team's own queue)
+let teamMusic = {};                 // teamIdx -> { name, url } (blob URL from an uploaded audio file)
+let musicMuted = false;
+let announcerEnabled = false;
+let announcerVoiceURI = null;
+
+/* Team owners & draft admin — placeholders for the real Supabase + Resend build.
+   "Send Invite" / "Email Results" don't actually send anything here; they just show
+   what the action will do once the backend is wired up. Login matching is real, but
+   it's a same-device convenience gate only, not real cross-device security. */
+let teamEmails = {};                // teamIdx -> email string
+let adminEmail = '';                // single designated draft admin email
+let currentUser = null;             // { type:'team', teamIdx } | { type:'admin' } | null
+
+function isAdmin(){
+  if(!adminEmail || !adminEmail.trim()) return true; // no admin configured yet — don't lock anyone out of setup
+  return !!currentUser && currentUser.type === 'admin';
+}
+function isTeamUser(teamIdx){ return !!currentUser && currentUser.type === 'team' && currentUser.teamIdx === teamIdx; }
+function canActFor(teamIdx){ return isAdmin() || isTeamUser(teamIdx); }
+let byRoundPrefsByTeam = {};        // teamIdx -> { round: position preference }
+let selectedQueueTeam = 0;          // which team's queue you're currently viewing/editing in the Player List tab
+TEAMS.forEach((_, i) => { teamQueues[i] = []; byRoundPrefsByTeam[i] = {}; });
+function currentQueue(){ return teamQueues[selectedQueueTeam]; }
+function currentByRoundPrefs(){ return byRoundPrefsByTeam[selectedQueueTeam]; }
+
+/* Pick clock — configured in the Admin tab */
+let pickClockEnabled = true;
+let pickClockSeconds = 90;
+let clockCountdownInterval = null;
+let clockRemaining = pickClockSeconds;
+
+/* Real player pool — loaded from the user's uploaded 2026 rankings CSV (top 300, PPR).
+   Each entry is [name, position, nfl team], already in rank order (index 0 = overall rank 1). */
+const REAL_PLAYER_DATA = [["Bijan Robinson","RB","ATL"],["Jahmyr Gibbs","RB","DET"],["Ja'Marr Chase","WR","CIN"],["Puka Nacua","WR","LAR"],["Jaxon Smith-Njigba","WR","SEA"],["Amon-Ra St. Brown","WR","DET"],["Christian McCaffrey","RB","SF"],["CeeDee Lamb","WR","DAL"],["Jonathan Taylor","RB","IND"],["Justin Jefferson","WR","MIN"],["James Cook III","RB","BUF"],["Ashton Jeanty","RB","LV"],["Drake London","WR","ATL"],["De'Von Achane","RB","MIA"],["Nico Collins","WR","HOU"],["Saquon Barkley","RB","PHI"],["Brock Bowers","TE","LV"],["Chase Brown","RB","CIN"],["A.J. Brown","WR","NE"],["Omarion Hampton","RB","LAC"],["George Pickens","WR","DAL"],["Trey McBride","TE","ARI"],["Derrick Henry","RB","BAL"],["Kenneth Walker III","RB","KC"],["Chris Olave","WR","NO"],["Josh Allen","QB","BUF"],["Rashee Rice","WR","KC"],["DeVonta Smith","WR","PHI"],["Jeremiyah Love","RB","ARI"],["Tetairoa McMillan","WR","CAR"],["Tee Higgins","WR","CIN"],["Kyren Williams","RB","LAR"],["Zay Flowers","WR","BAL"],["Lamar Jackson","QB","BAL"],["Drake Maye","QB","NE"],["Breece Hall","RB","NYJ"],["Malik Nabers","WR","NYG"],["Josh Jacobs","RB","GB"],["Garrett Wilson","WR","NYJ"],["Colston Loveland","TE","CHI"],["Ladd McConkey","WR","LAC"],["Javonte Williams","RB","DAL"],["Emeka Egbuka","WR","TB"],["Jaylen Waddle","WR","DEN"],["Travis Etienne Jr.","RB","NO"],["Joe Burrow","QB","CIN"],["Terry McLaurin","WR","WAS"],["Luther Burden III","WR","CHI"],["Davante Adams","WR","LAR"],["Cam Skattebo","RB","NYG"],["Jameson Williams","WR","DET"],["Bucky Irving","RB","TB"],["D'Andre Swift","RB","CHI"],["Quinshon Judkins","RB","CLE"],["Mike Evans","WR","SF"],["Tyler Warren","TE","IND"],["Christian Watson","WR","GB"],["TreVeyon Henderson","RB","NE"],["Jayden Daniels","QB","WAS"],["DJ Moore","WR","BUF"],["Jalen Hurts","QB","PHI"],["Rome Odunze","WR","CHI"],["David Montgomery","RB","HOU"],["Bhayshul Tuten","RB","JAC"],["Tucker Kraft","TE","GB"],["Carnell Tate","WR","TEN"],["Caleb Williams","QB","CHI"],["Justin Herbert","QB","LAC"],["Jadarian Price","RB","SEA"],["Jaylen Warren","RB","PIT"],["Marvin Harrison Jr.","WR","ARI"],["Alec Pierce","WR","IND"],["Trevor Lawrence","QB","JAC"],["DK Metcalf","WR","PIT"],["Rhamondre Stevenson","RB","NE"],["Chuba Hubbard","RB","CAR"],["Tony Pollard","RB","TEN"],["Harold Fannin Jr.","TE","CLE"],["Courtland Sutton","WR","DEN"],["Rico Dowdle","RB","PIT"],["Brian Thomas Jr.","WR","JAC"],["Dak Prescott","QB","DAL"],["Kyle Pitts Sr.","TE","ATL"],["Sam LaPorta","TE","DET"],["Jaxson Dart","QB","NYG"],["Chris Godwin Jr.","WR","TB"],["Jordyn Tyson","WR","NO"],["RJ Harvey","RB","DEN"],["Parker Washington","WR","JAC"],["Brock Purdy","QB","SF"],["Michael Wilson","WR","ARI"],["Kyle Monangai","RB","CHI"],["Makai Lemon","WR","PHI"],["Blake Corum","RB","LAR"],["Michael Pittman Jr.","WR","PIT"],["J.K. Dobbins","RB","DEN"],["Patrick Mahomes II","QB","KC"],["Jakobi Meyers","WR","JAC"],["Bo Nix","QB","DEN"],["Kenny Gainwell","RB","TB"],["Quentin Johnston","WR","LAC"],["Travis Kelce","TE","KC"],["Matthew Stafford","QB","LAR"],["Jordan Addison","WR","MIN"],["Ricky Pearsall","WR","SF"],["Wan'Dale Robinson","WR","TEN"],["Aaron Jones Sr.","RB","MIN"],["Dalton Kincaid","TE","BUF"],["Rachaad White","RB","WAS"],["Jared Goff","QB","DET"],["Jayden Reed","WR","GB"],["George Kittle","TE","SF"],["Kyler Murray","QB","MIN"],["Josh Downs","WR","IND"],["Jacory Croskey-Merritt","RB","WAS"],["Jake Ferguson","TE","DAL"],["Isaiah Likely","TE","NYG"],["Dallas Goedert","TE","PHI"],["Jordan Mason","RB","MIN"],["Jordan Love","QB","GB"],["Xavier Worthy","WR","KC"],["Baker Mayfield","QB","TB"],["Jayden Higgins","WR","HOU"],["Tyrone Tracy Jr.","RB","NYG"],["Tyler Shough","QB","NO"],["Khalil Shakir","WR","BUF"],["Mark Andrews","TE","BAL"],["Romeo Doubs","WR","NE"],["Chris Rodriguez Jr.","RB","JAC"],["KC Concepcion","WR","CLE"],["Malik Willis","QB","MIA"],["Zach Charbonnet","RB","SEA"],["Tyler Allgeier","RB","ARI"],["Jonathon Brooks","RB","CAR"],["Jalen Coker","WR","CAR"],["Matthew Golden","WR","GB"],["Woody Marks","RB","HOU"],["Isiah Pacheco","RB","DET"],["Juwan Johnson","TE","NO"],["Tyjae Spears","RB","TEN"],["Dylan Sampson","RB","CLE"],["C.J. Stroud","QB","HOU"],["Brenton Strange","TE","JAC"],["Hunter Henry","TE","NE"],["Oronde Gadsden II","TE","LAC"],["Rashid Shaheed","WR","SEA"],["Keaton Mitchell","RB","LAC"],["Sam Darnold","QB","SEA"],["Cam Ward","QB","TEN"],["Brian Robinson Jr.","RB","ATL"],["Alvin Kamara","RB","NO"],["Omar Cooper Jr.","WR","NYJ"],["Jerry Jeudy","WR","CLE"],["Tank Bigsby","RB","PHI"],["Chig Okonkwo","TE","WAS"],["Jauan Jennings","WR","MIN"],["Jonah Coleman","RB","DEN"],["Denzel Boston","WR","CLE"],["Daniel Jones","QB","IND"],["Jalen McMillan","WR","TB"],["Dalton Schultz","TE","HOU"],["Adonai Mitchell","WR","NYJ"],["Travis Hunter","WR","JAC"],["Bryce Young","QB","CAR"],["Braelon Allen","RB","NYJ"],["Kayshon Boutte","WR","NE"],["Tre Tucker","WR","LV"],["Kenyon Sadiq","TE","NYJ"],["Tre' Harris","WR","LAC"],["Ryan Flournoy","WR","DAL"],["Troy Franklin","WR","DEN"],["T.J. Hockenson","TE","MIN"],["AJ Barner","TE","SEA"],["Emanuel Wilson","RB","SEA"],["Isaac TeSlaa","WR","DET"],["James Conner","RB","ARI"],["Calvin Ridley","WR","TEN"],["Kimani Vidal","RB","LAC"],["Stefon Diggs","WR","FA"],["Jaylin Noel","WR","HOU"],["Houston Texans","DST","HOU"],["Ray Davis","RB","BUF"],["Jacoby Brissett","QB","ARI"],["Pat Bryant","WR","DEN"],["Emmett Johnson","RB","KC"],["Darnell Mooney","WR","NYG"],["Gunnar Helm","TE","TEN"],["Deebo Samuel Sr.","WR","FA"],["Mike Washington Jr.","RB","LV"],["Sean Tucker","RB","TB"],["Jalen Nailor","WR","LV"],["De'Zhaun Stribling","WR","SF"],["Denver Broncos","DST","DEN"],["Seattle Seahawks","DST","SEA"],["Malik Washington","WR","MIA"],["Los Angeles Rams","DST","LAR"],["Pat Freiermuth","TE","PIT"],["David Njoku","TE","LAC"],["Philadelphia Eagles","DST","PHI"],["Terrance Ferguson","TE","LAR"],["Nicholas Singleton","RB","TEN"],["Pittsburgh Steelers","DST","PIT"],["Jacksonville Jaguars","DST","JAC"],["Ka'imi Fairbairn","K","HOU"],["Ted Hurst III","WR","TB"],["Chimere Dike","WR","TEN"],["Cameron Dicker","K","LAC"],["Brandon Aubrey","K","DAL"],["New England Patriots","DST","NE"],["Minnesota Vikings","DST","MIN"],["Cade Otton","TE","TB"],["Cam Little","K","JAC"],["Dontayvion Wicks","WR","PHI"],["Jason Myers","K","SEA"],["Brandon Aiyuk","WR","SF"],["Germie Bernard","WR","PIT"],["Los Angeles Chargers","DST","LAC"],["Antonio Williams","WR","WAS"],["Kaytron Allen","RB","WAS"],["Jaylen Wright","RB","MIA"],["Tank Dell","WR","HOU"],["Eddy Pineiro","K","SF"],["Rashod Bateman","WR","BAL"],["Ollie Gordon II","RB","MIA"],["Tyler Loop","K","BAL"],["Aaron Rodgers","QB","PIT"],["Geno Smith","QB","NYJ"],["Cooper Kupp","WR","SEA"],["Kansas City Chiefs","DST","KC"],["Baltimore Ravens","DST","BAL"],["Colby Parkinson","TE","LAR"],["Zachariah Branch","WR","ATL"],["Green Bay Packers","DST","GB"],["Cairo Santos","K","CHI"],["MarShawn Lloyd","RB","GB"],["Jake Bates","K","DET"],["Evan McPherson","K","CIN"],["Seth McGowan","RB","IND"],["Elic Ayomanor","WR","TEN"],["Andy Borregales","K","NE"],["Fernando Mendoza","QB","LV"],["Detroit Lions","DST","DET"],["Justice Hill","RB","BAL"],["Buffalo Bills","DST","BUF"],["Jack Bech","WR","LV"],["Cleveland Browns","DST","CLE"],["Eli Stowers","TE","PHI"],["Chase McLaughlin","K","TB"],["Keon Coleman","WR","BUF"],["Harrison Mevis","K","LAR"],["Malik Davis","RB","DAL"],["Elijah Sarratt","WR","BAL"],["Christian Kirk","WR","SF"],["Tory Horton","WR","SEA"],["Oscar Delp","TE","NO"],["Evan Engram","TE","DEN"],["Tyreek Hill","WR","FA"],["Harrison Butker","K","KC"],["Ty Johnson","RB","BUF"],["Chris Brooks","RB","GB"],["Chris Boswell","K","PIT"],["Jordan James","RB","SF"],["Chris Bell","WR","MIA"],["Malachi Fields","WR","NYG"],["DJ Giddens","RB","IND"],["Devin Neal","RB","NO"],["Jaydon Blue","RB","DAL"],["Samaje Perine","RB","CIN"],["Tua Tagovailoa","QB","ATL"],["Kaleb Johnson","RB","PIT"],["Michael Penix Jr.","QB","ATL"],["Demond Claiborne","RB","MIN"],["George Holani","RB","SEA"],["Marvin Mims Jr.","WR","DEN"],["Tyquan Thornton","WR","KC"],["Trey Benson","RB","ARI"],["Chris Brazzell II","WR","CAR"],["Wil Lutz","K","DEN"],["Mason Taylor","TE","NYJ"],["Theo Johnson","TE","NYG"],["Isaiah Davis","RB","NYJ"],["Devaughn Vele","WR","NO"],["LeQuint Allen Jr.","RB","JAC"],["Shedeur Sanders","QB","CLE"],["Devin Singletary","RB","NYG"],["Atlanta Falcons","DST","ATL"],["Darius Slayton","WR","NYG"],["Xavier Legette","WR","CAR"],["Will Reichard","K","MIN"],["Brashard Smith","RB","KC"],["Emari Demercado","RB","KC"],["Kirk Cousins","QB","LV"],["Kendre Miller","RB","NO"],["Greg Dulcich","TE","MIA"],["Kyle Williams","WR","NE"],["Keenan Allen","WR","LAC"],["Hollywood Brown","WR","PHI"],["Mack Hollins","WR","NE"],["Jerome Ford","RB","WAS"],["Najee Harris","RB","LAC"],["Deshaun Watson","QB","CLE"],["Kaelon Black","RB","SF"],["San Francisco 49ers","DST","SF"],["Adam Randall","RB","BAL"],["Mike Gesicki","TE","CIN"],["Indianapolis Colts","DST","IND"],["Charlie Smyth","K","NO"],["Trevor Etienne","RB","CAR"],["Isaiah Bond","WR","CLE"],["Isaac Guerendo","RB","SF"],["Jaleel McLaughlin","RB","DEN"],["Tahj Brooks","RB","CIN"],["Skyler Bell","WR","BUF"],["Jake Tonges","TE","SF"],["Joe Mixon","RB","FA"],["Ja'Kobi Lane","WR","BAL"],["Jarquez Hunter","RB","LAR"],["Audric Estime","RB","NO"],["New Orleans Saints","DST","NO"],["Kareem Hunt","RB","FA"],["Andrei Iosivas","WR","CIN"],["Darnell Washington","TE","PIT"],["Cedric Tillman","WR","CLE"],["Chicago Bears","DST","CHI"],["J.J. McCarthy","QB","MIN"],["Will Shipley","RB","PHI"],["Jalen Royals","WR","KC"],["Jahan Dotson","WR","ATL"],["Calvin Austin III","WR","NYG"],["Tez Johnson","WR","TB"],["Luke McCaffrey","WR","WAS"],["Max Klare","TE","LAR"],["Konata Mumpfield","WR","LAR"],["Caleb Douglas","WR","MIA"],["Olamide Zaccheaus","WR","ATL"],["Jalen Tolbert","WR","MIA"],["Mac Jones","QB","SF"],["Noah Gray","TE","KC"],["Elijah Arroyo","TE","SEA"],["Bam Knight","RB","ARI"],["Cole Kmet","TE","CHI"],["Tyler Higbee","TE","LAR"],["Xavier Hutchinson","WR","HOU"],["Eli Heidenreich","RB","PIT"],["Dawson Knox","TE","BUF"],["Dont'e Thornton Jr.","WR","LV"],["J'Mari Taylor","RB","JAC"],["Michael Mayer","TE","LV"],["Joshua Palmer","WR","BUF"],["Brenen Thompson","WR","LAC"],["Ja'Tavion Sanders","TE","CAR"],["Carson Beck","QB","ARI"],["Jawhar Jordan","RB","HOU"],["Nick Chubb","RB","FA"],["DeMario Douglas","WR","NE"],["John Metchie III","WR","CAR"],["Carolina Panthers","DST","CAR"],["Ty Simpson","QB","LAR"],["Bryce Lance","WR","NO"],["Kendrick Bourne","WR","ARI"],["Justin Fields","QB","KC"],["Michael Carter","RB","TEN"],["Treylon Burks","WR","WAS"],["Noah Fant","TE","NO"],["Nick Westbrook-Ikhine","WR","IND"],["Kalif Raymond","WR","CHI"],["Raheim Sanders","RB","CLE"],["Anthony Richardson Sr.","QB","IND"],["Justin Joly","TE","DEN"],["Austin Ekeler","RB","FA"],["Jaylin Lane","WR","WAS"],["KaVontae Turpin","WR","DAL"],["Zavion Thomas","WR","CHI"],["Savion Williams","WR","GB"],["Eli Raridon","TE","NE"],["Tyler Bass","K","BUF"],["Luke Musgrave","TE","GB"],["Kevin Coleman Jr.","WR","MIA"],["Tommy Tremble","TE","CAR"],["Ben Sinnott","TE","WAS"],["Phil Mafah","RB","DAL"],["Tutu Atwell","WR","MIA"],["Dallas Cowboys","DST","DAL"],["Zane Gonzalez","K","MIA"],["Deion Burks","WR","IND"],["Mitchell Evans","TE","CAR"],["Jordan Whittington","WR","LAR"],["Daniel Bellinger","TE","TEN"],["Dameon Pierce","RB","PHI"],["Elijah Higgins","TE","ARI"],["Greg Dortch","WR","DET"],["Zach Ertz","TE","FA"],["Roschon Johnson","RB","CHI"],["Darren Waller","TE","FA"],["Jake Elliott","K","PHI"],["Cyrus Allen","WR","KC"],["Kyle Juszczyk","RB","SF"],["John Bates","TE","WAS"],["Dyami Brown","WR","WAS"],["Rasheen Ali","RB","BAL"],["Cincinnati Bengals","DST","CIN"],["Terrell Jennings","RB","NE"],["Tommy Myers","TE","FA"],["Jonnu Smith","TE","FA"],["Antonio Gibson","RB","FA"],["Tyler Lockett","WR","LV"],["CJ Daniels","WR","LAR"],["Jeremy McNichols","RB","WAS"],["Erick All Jr.","TE","CIN"],["Tampa Bay Buccaneers","DST","TB"],["Damien Martinez","RB","GB"],["Josh Oliver","TE","MIN"],["New York Giants","DST","NYG"],["DeAndre Hopkins","WR","BAL"],["Jam Miller","RB","NE"],["Marcus Mariota","QB","WAS"],["Joe Flacco","QB","CIN"],["Devontez Walker","WR","BAL"],["Dylan Laube","RB","LV"],["Austin Hooper","TE","ATL"],["Marlin Klein","TE","HOU"],["Ashton Dulin","WR","IND"],["Adam Trautman","TE","DEN"],["Brock Wright","TE","DET"],["Luke Schoonmaker","TE","DAL"],["Miles Sanders","RB","FA"],["Elijah Moore","WR","PHI"],["Jahdae Walker","WR","CHI"],["Roman Wilson","WR","PIT"],["Odell Beckham Jr.","WR","NYG"],["Trey Smack","K","GB"],["Sterling Shepard","WR","FA"],["Mitch Tinsley","WR","CIN"],["Nate Boerkircher","TE","JAC"],["Brittain Brown","RB","CHI"],["Jaret Patterson","RB","LAC"],["Demarcus Robinson","WR","SF"],["Tennessee Titans","DST","TEN"],["Jameis Winston","QB","NYG"],["Colbie Young","WR","CIN"],["Raheem Mostert","RB","LV"],["Elijah Mitchell","RB","PHI"],["Khalil Herbert","RB","FA"],["Miami Dolphins","DST","MIA"],["Ameer Abdullah","RB","JAC"],["Tanner Hudson","TE","CIN"],["Jaydn Ott","RB","KC"],["Xavier Smith","WR","LAR"],["Ty Chandler","RB","NO"],["Jackson Hawes","TE","BUF"],["AJ Dillon","RB","CAR"],["Sione Vaki","RB","DET"],["Kevin Austin Jr.","WR","NO"],["Alexander Mattison","RB","FA"],["Sam Roush","TE","CHI"],["Jordan Waters","RB","LAR"],["Diontae Johnson","WR","FA"],["Joe Milton III","QB","DAL"],["Brandin Cooks","WR","FA"],["Ronnie Bell","WR","NO"],["Matt Hibner","TE","BAL"],["Cam Akers","RB","FA"],["Graig Cooper","RB","FA"],["Dante Miller","RB","NYG"],["Robert Henry Jr.","RB","WAS"],["Van Jefferson","WR","WAS"],["Myles Montgomery","RB","NE"],["Zavier Scott","RB","MIN"],["Ronnie Rivers","RB","LAR"],["Zay Jones","WR","FA"],["Hunter Luepke","RB","DAL"],["Josh Reynolds","WR","FA"],["Drew Sample","TE","CIN"],["Malik Benson","WR","LV"],["Clyde Edwards-Helaire","RB","FA"],["Chip Trayanum","RB","NYJ"],["Spencer Shrader","K","IND"],["Charlie Kolar","TE","LAC"],["Blake Grupe","K","IND"],["Jake Moody","K","WAS"],["Donovan Edwards","RB","MIA"],["Jack Endries","TE","CIN"],["Michael Burton","RB","CLE"],["Kalel Mullings","RB","TEN"],["Chad Ryland","K","ARI"],["Washington Commanders","DST","WAS"],["Taysom Hill","TE","FA"],["Hunter Renfrow","WR","FA"],["Mo Alie-Cox","TE","IND"],["Albert Okwuegbunam Jr.","TE","LV"],["Myles Gaskin","RB","FA"],["Tai Felton","WR","MIN"],["Pierre Strong Jr.","RB","GB"],["Zamir White","RB","LV"],["Tim Patrick","WR","NYJ"],["Jermaine Burton","WR","FA"],["Nate Adkins","TE","DEN"],["Mecole Hardman Jr.","WR","BUF"],["Durham Smythe","TE","BAL"],["Will Dissly","TE","FA"],["Cade Klubnik","QB","NYJ"],["Russell Gage Jr.","WR","FA"],["Will Mallory","TE","IND"],["Trey Sermon","RB","FA"],["Ja'Lynn Polk","WR","NO"],["JuJu Smith-Schuster","WR","NYG"],["Gardner Minshew II","QB","ARI"],["Salvon Ahmed","RB","CHI"],["Deon Jackson","RB","FA"],["Moliki Matavao","TE","NO"],["Tyler Conklin","TE","DET"],["Jordan Akins","TE","FA"],["Lan Larison","RB","NE"],["Julian Hill","TE","NE"],["Quinn Ewers","QB","MIA"],["Xavier Restrepo","WR","TEN"],["Jakobie Keeney-James","WR","FA"],["Will Kacmarek","TE","MIA"],["Frank Gore Jr.","RB","BUF"],["Elijah Dotson","RB","FA"],["Montorie Foster Jr.","WR","SEA"],["Jermar Jefferson","RB","FA"],["Riley Nowakowski","TE","PIT"],["Devonte Boyd","WR","FA"],["Avery Williams","RB","FA"],["Michael Woods II","WR","FA"],["Sincere McCormick","RB","SF"],["Xavier Weaver","WR","ARI"],["Jacardia Wright","RB","SEA"],["Michael Briscoe","WR","MIN"],["Jabari Small","RB","DET"],["Lil'Jordan Humphrey","WR","DEN"],["Kaden Wetjen","WR","PIT"],["Nathan Carter","RB","ATL"],["Quez Watkins","WR","PHI"],["Seydou Traore","TE","MIA"],["Anthony McFarland Jr.","RB","FA"],["Miles Davis","RB","CAR"],["Josh Williams","RB","TB"],["Max Bredeson","RB","MIN"],["Braxton Berrios","WR","NYG"],["Ulysses Bentley IV","RB","IND"],["Ray-Ray McCloud III","WR","FA"],["Desmond Reid","RB","FA"],["Jonathan Williams","RB","FA"],["Casey Washington","WR","FA"],["Evan Hull","RB","HOU"],["Myles Price","WR","MIN"],["Montrell Johnson Jr.","RB","FA"],["Nick Bawden","RB","FA"],["Kendric Pryor","WR","CIN"],["Omarius Hines","WR","FA"],["Tyler Goodson","RB","ATL"],["Miles Kitselman","TE","DET"],["Dean Connors","RB","LAR"],["Alec Ingold","RB","LAC"],["Carsen Ryan","TE","CLE"],["Wendell Smallwood","RB","FA"],["Royce Freeman","RB","FA"],["Isaiah Hodgins","WR","NYG"],["Michael Bandy","WR","DEN"],["Joe Royer","TE","CLE"],["Roman Hemby","RB","LV"],["Jalen Brooks","WR","ARI"],["David Moore","WR","CAR"],["Khalil Dinkins","TE","SF"],["Jamal Haynes","RB","CIN"],["Jacob Saylors","RB","DET"],["Tanner Koziol","TE","JAC"],["Craig Reynolds","RB","FA"],["Michael Wortham","WR","JAC"],["Gus Edwards","RB","FA"],["Nick Folk","K","ATL"],["Jordan Mims","RB","FA"],["Michael Trigg","TE","DAL"],["Ja'Quinden Jackson","RB","FA"],["Kye Robichaux","RB","DET"],["Josh Cuevas","TE","BAL"],["Theo Wease Jr.","WR","MIA"],["Patrick Ricard","RB","NYG"],["Logan Thomas","TE","FA"],["Adam Prentice","RB","DEN"],["Kendall Milton","RB","CIN"],["Brandon McManus","K","FA"],["Jase McClellan","RB","FA"],["Bo Melton","WR","GB"],["Ben Sauls","K","NYG"],["Jaheim Bell","TE","PIT"],["Darrynton Evans","RB","FA"],["Dominic Lovett","WR","DET"],["Lewis Bond","WR","HOU"],["Luke Farrell","TE","SF"],["Anthony Smith","WR","DAL"],["Emmanuel Henderson Jr.","WR","SEA"],["Ricky White III","WR","SEA"],["Kaden Prather","WR","FA"],["Trayveon Williams","RB","FA"],["Tyler Johnson","WR","DAL"],["Bauer Sharp","TE","TB"],["Charlie Woerner","TE","ATL"],["Julius Chestnut","RB","TEN"],["DeeJay Dallas","RB","JAC"],["Joey Slye","K","TEN"],["Dale Moss","WR","FA"],["Andrew Beck","TE","NYJ"],["CJ Williams","WR","JAC"],["Blake Watson","RB","FA"],["Carlos Washington Jr.","RB","MIA"],["Carson Steele","RB","PHI"],["Chase Edmonds","RB","WAS"],["Chris Evans","RB","FA"],["Tyler Badie","RB","DEN"],["D'Ernest Johnson","RB","FA"],["Malik Taylor","WR","FA"],["D'Onta Foreman","RB","FA"],["Kameron Johnson","WR","TB"],["Dare Ogunbowale","RB","FA"],["Deuce Vaughn","RB","FA"],["Dillon Johnson","RB","FA"],["Dontrell Hilliard","RB","FA"],["Eric Gray","RB","NYG"],["Hassan Haskins","RB","LAC"],["Israel Abanikanda","RB","DAL"],["JaMycal Hasty","RB","FA"],["Jashaun Corbin","RB","FA"],["Bisi Johnson","WR","FA"],["Jeff Wilson Jr.","RB","FA"],["Jonathan Ward","RB","FA"],["Kenny McIntosh","RB","SEA"],["Kevin Harris","RB","FA"],["Lew Nichols III","RB","PIT"],["Gage Larvadain","WR","CLE"],["Ross Dwelley","TE","FA"],["Kendrick Law","WR","DET"],["Raheem Blackshear","RB","FA"],["Tanner Conner","TE","NYG"],["Johnny Mundt","TE","PHI"],["Drew Ogletree","TE","IND"],["Cade Stover","TE","HOU"],["Jimmy Horn Jr.","WR","CAR"],["Josiah Deguara","TE","FA"],["Ryan Griffin","TE","FA"],["Reggie Gilliam","RB","NE"],["Pharaoh Brown","TE","FA"],["Reggie Virgil","WR","ARI"],["Tip Reiman","TE","ARI"],["Connor Heyward","TE","LV"],["Gavin Bartholomew","TE","MIN"],["Anthony Firkser","TE","WAS"],["Jack Stoll","TE","CLE"],["Ben Sims","TE","MIA"],["Brevyn Spann-Ford","TE","DAL"],["Jared Wiley","TE","KC"],["Tucker Fisk","TE","FA"],["Ian Thomas","TE","LV"],["Jeremy Ruckert","TE","NYJ"],["Josh Whyle","TE","GB"],["Foster Moreau","TE","HOU"],["Cedrick Wilson Jr.","WR","DET"],["Geoff Swaim","TE","FA"],["Harrison Bryant","TE","SEA"],["Hunter Long","TE","JAC"],["James Mitchell","TE","CAR"],["Tyrion Davis-Price","RB","FA"],["Lucas Krull","TE","DEN"],["Stone Smartt","TE","PHI"],["Brayden Willis","TE","SF"],["Chris Manhertz","TE","NYG"],["Cole Turner","TE","MIA"],["Devin Culp","TE","TB"],["Eric Saubert","TE","SEA"],["Jesper Horsted","TE","FA"],["Velus Jones Jr.","WR","SEA"],["Michael Jacobson","TE","FA"],["Noah Brown","WR","FA"],["Payne Durham","TE","TB"],["Teagan Quitoriano","TE","ARI"],["Quintin Morris","TE","JAC"],["Blake Whiteheart","TE","CLE"],["Brevin Jordan","TE","HOU"],["Brycen Hopkins","TE","FA"],["CJ Dippre","TE","NE"],["Curtis Hodges","TE","FA"],["Skyy Moore","WR","GB"],["Davis Allen","TE","LAR"],["Anthony Gould","WR","IND"],["Gerald Everett","TE","FA"],["Grant Calcaterra","TE","PHI"],["John Hurst","WR","FA"],["Jake Briningstool","TE","KC"],["Jelani Woods","TE","NYJ"],["Kenny Yeboah","TE","ARI"],["Ko Kieft","TE","TB"],["Marquez Valdes-Scantling","WR","DAL"],["Kylen Granson","TE","TEN"],["Luke Lachey","TE","GB"],["Mitchell Wilcox","TE","FA"],["Nick Boyle","TE","FA"],["Nick Vannett","TE","LAR"],["Noah Togiai","TE","FA"],["Peyton Hendershot","TE","FA"],["Sean McKeon","TE","IND"],["Tyler Davis","WR","FA"],["Zach Gentry","TE","FA"],["Gabe Davis","WR","FA"],["Jonathan Mingo","WR","DAL"],["Nelson Agholor","WR","FA"],["Brycen Tremayne","WR","CAR"],["DeAndre Carter","WR","FA"],["Tyrell Shavers","WR","BUF"],["Jake Bobo","WR","SEA"],["Tahj Washington","WR","MIA"],["Bub Means","WR","NO"],["Mason Tipton","WR","NO"],["Barion Brown","WR","NO"],["Josh Cameron","WR","JAC"],["KeAndre Lambert-Smith","WR","LAC"],["Jordan Watkins","WR","SF"],["Stephen Campbell","RB","FA"],["Marquez Callaway","WR","FA"],["Samori Toure","WR","PHI"],["Scotty Miller","WR","CHI"],["Trenton Irwin","WR","FA"],["Dee Eskridge","WR","FA"],["LaJohntay Wester","WR","BAL"],["Tylan Wallace","WR","CLE"],["Allen Lazard","WR","FA"],["Arian Smith","WR","NYJ"],["Curtis Samuel","WR","FA"],["Jamari Thrash","WR","CLE"],["Jason Brownlee","WR","KC"],["KhaDarel Hodge","WR","FA"],["Shedrick Jackson","WR","LV"],["Ainias Smith","WR","CAR"],["Anthony Schwartz","WR","FA"],["Austin Trammell","WR","JAC"],["Brandon Powell","WR","FA"],["Britain Covey","WR","PHI"],["Byron Pringle","WR","FA"],["Charlie Jones","WR","CIN"],["Chris Blair","WR","ATL"],["Cody Thompson","WR","FA"],["Danny Gray","WR","PHI"],["Daurice Fountain","WR","FA"],["Derius Davis","WR","LAC"],["Equanimeous St. Brown","WR","FA"],["Isaiah McKenzie","WR","FA"],["Jacob Cowing","WR","SF"],["Jalen Guyton","WR","FA"],["Jalen Reagor","WR","MIA"],["Jalin Hyatt","WR","NYG"],["James Proche II","WR","FA"],["Javon Baker","WR","FA"],["Johnny Wilson","WR","PHI"],["Justin Shorter","WR","LV"],["Laquon Treadwell","WR","IND"],["Laviska Shenault Jr.","WR","FA"],["Malachi Corley","WR","CLE"],["Nick Nash","WR","WAS"],["Nikko Remigio","WR","KC"],["Rakim Jarrett","WR","FA"],["Tejhaun Palmer","WR","ARI"],["Tim Jones","WR","JAC"],["Trey Palmer","WR","NO"],["Trishton Jackson","WR","FA"],["Xavier Gipson","WR","NYG"],["Zach Pascal","WR","FA"],["Ross Travis","TE","FA"],["Mazeo Bennett","WR","FA"],["Las Vegas Raiders","DST","LV"],["Arizona Cardinals","DST","ARI"],["New York Jets","DST","NYJ"],["Ryan Fitzgerald","K","CAR"],["Daniel Carlson","K","LV"],["Cade York","K","NYJ"],["Andre Szmyt","K","CLE"]]; // [name, pos, team], ranked in order (index 0 = overall rank 1); source: FantasyPros_2026_Draft_ALL_Rankings.csv, extended with the remaining DST/K teams
+
+function buildPlayerPool(){
+  const posCounts = {};
+  return REAL_PLAYER_DATA.map((row, i) => {
+    const [name, pos, nfl] = row;
+    posCounts[pos] = (posCounts[pos] || 0) + 1;
+    return {
+      id: i + 1,
+      name,
+      pos,
+      nfl,
+      posRank: posCounts[pos],
+      overallRank: i + 1,
+      drafted: false
+    };
+  });
+}
+
+const PLAYERS = buildPlayerPool();
+function playerById(id){ return PLAYERS.find(p=>p.id===id); }
+function nextAvailable(pos){
+  return PLAYERS.filter(p=>p.pos===pos && !p.drafted).sort((a,b)=>a.overallRank-b.overallRank)[0];
+}
+
+/* ---- Build 42 completed picks (3.5 rounds) + round 4 remainder on the clock ---- */
+const ROUND_PATTERNS = {
+  1:['RB','WR'], 2:['WR','RB'], 3:['WR','RB','TE','QB'], 4:['QB','RB','WR','TE']
+};
+
+function computeOrderForRound(r, baseOrderIdx){
+  if(draftType === 'linear'){
+    return baseOrderIdx.slice();
+  }
+  if(draftType === 'custom'){
+    const dir = customDirections[r] || (r % 2 === 1 ? 'forward' : 'reverse');
+    return dir === 'reverse' ? baseOrderIdx.slice().reverse() : baseOrderIdx.slice();
+  }
+  // snake (default): odd rounds forward, even rounds reversed
+  return (r % 2 === 1) ? baseOrderIdx.slice() : baseOrderIdx.slice().reverse();
+}
+
+const DRAFT = []; // {round, pickInRound, overall, teamIdx, player: {...} or null}
+let overallCounter = 0;
+let ON_CLOCK = null;
+
+function buildDraft(){
+  PLAYERS.forEach(p=> p.drafted = false);
+  DRAFT.length = 0;
+  overallCounter = 0;
+
+  const baseOrderIdx = adminOrder.map(name => TEAMS.indexOf(name));
+
+  for(let r=1; r<=4; r++){
+    const order = computeOrderForRound(r, baseOrderIdx);
+    for(let i=0;i<12;i++){
+      overallCounter++;
+      const teamIdx = order[i];
+      let player = null;
+      const isFilled = (r <= 3) || (r === 4 && i < 6);
+      if(isFilled){
+        const pattern = ROUND_PATTERNS[r];
+        const pos = pattern[i % pattern.length];
+        let p = nextAvailable(pos) || PLAYERS.find(pl=>!pl.drafted);
+        if(p){ p.drafted = true; player = p; }
+      }
+      DRAFT.push({ round:r, pickInRound:i+1, overall:overallCounter, teamIdx, player });
+    }
+  }
+  ON_CLOCK = DRAFT.find(d=>!d.player) || null;
+  pickHistory = [];
+  queue = [];
+}
+
+buildDraft();
+
+/* ============================= FULL BOARD RENDER ============================= */
+function renderFullBoard(){
+  const grid = document.getElementById('boardGrid');
+  grid.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.className = 'board-cols-header';
+  header.innerHTML = '<div class="col-head corner"></div>' + TEAMS.map(t=>`<div class="col-head">${t}</div>`).join('');
+  grid.appendChild(header);
+
+  for(let r=1; r<=4; r++){
+    const row = document.createElement('div');
+    row.className = 'round-row';
+    const picks = DRAFT.filter(d=>d.round===r).sort((a,b)=>{
+      // display in team-column order (0..11), not pick order
+      return a.teamIdx - b.teamIdx;
+    });
+    let html = `<div class="round-label">RD ${r}<small>${r%2===1?'→':'←'}</small></div>`;
+    for(const d of picks){
+      html += tileHTML(d);
+    }
+    row.innerHTML = html;
+    grid.appendChild(row);
+  }
+
+  grid.querySelectorAll('.tile[data-round]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const round = parseInt(el.dataset.round);
+      const overall = parseInt(el.dataset.overall);
+      openRound(round, overall);
+    });
+  });
+}
+
+function tileHTML(d){
+  const isOnClock = (d===ON_CLOCK);
+  if(!d.player){
+    return `<div class="tile empty ${isOnClock?'on-clock':''}" data-round="${d.round}" data-overall="${d.overall}">
+      <div class="pick-no">Pick #${d.pickInRound}</div>
+      <div class="pname" style="margin-top:20px; font-style:italic; color:var(--chalk-dim);">${isOnClock?'On the clock':'Upcoming'}</div>
+      <div class="pteam">${TEAMS[d.teamIdx]}</div>
+    </div>`;
+  }
+  const p = d.player;
+  return `<div class="tile" data-round="${d.round}" data-overall="${d.overall}">
+    <div class="pick-no">Pick #${d.pickInRound}</div>
+    <div class="pos-tag pos-${p.pos}">${p.pos}</div>
+    <div class="pname">${p.name}</div>
+    <div class="pteam">${p.nfl}</div>
+  </div>`;
+}
+
+/* ============================= ROUND OVERLAY ============================= */
+const overlay = document.getElementById('roundOverlay');
+const carousel = document.getElementById('roundCarousel');
+let openRoundNumber = null; // which round is currently shown in the overlay, or null if closed
+
+function openRound(round, focusOverall, smoothScroll){
+  openRoundNumber = round;
+  document.getElementById('ovRoundNum').textContent = round;
+  const picks = DRAFT.filter(d=>d.round===round).sort((a,b)=> a.pickInRound - b.pickInRound);
+  carousel.innerHTML = picks.map(d=>{
+    const isFocus = (d.overall === focusOverall) || (!focusOverall && d===ON_CLOCK && d.round===round);
+    return roundTileHTML(d, isFocus);
+  }).join('');
+
+  // mini backdrop (reuse full board, cloned, non-interactive)
+  document.getElementById('backdropBoard').innerHTML = document.getElementById('boardGrid').outerHTML;
+
+  overlay.classList.remove('hidden');
+
+  const TILE_W = 300; // must match .rtile flex-basis
+  function centerOn(el, smooth){
+    const pad = Math.max(carousel.clientWidth/2 - TILE_W/2, 20);
+    carousel.style.paddingLeft = pad + 'px';
+    carousel.style.paddingRight = pad + 'px';
+    const offset = el.offsetLeft - (carousel.clientWidth/2 - el.clientWidth/2);
+    carousel.scrollTo({ left: offset, behavior: smooth ? 'smooth' : 'auto' });
+  }
+
+  requestAnimationFrame(()=>{
+    const target = carousel.querySelector('.rtile.current') || carousel.children[0];
+    if(target) centerOn(target, !!smoothScroll);
+  });
+
+  carousel.querySelectorAll('.rtile').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      carousel.querySelectorAll('.rtile').forEach(t=>t.classList.remove('current'));
+      el.classList.add('current');
+      centerOn(el, true);
+    });
+  });
+}
+
+function roundTileHTML(d, isCurrent){
+  const team = TEAMS[d.teamIdx];
+  if(!d.player){
+    return `<div class="rtile empty ${isCurrent?'current':''}">
+      <div class="team-hover">${team}</div>
+      <div class="pick-no">Pick #${d.pickInRound}</div>
+      <div class="pname">${d===ON_CLOCK ? 'On the clock' : 'Upcoming'}</div>
+      <div class="pteam"></div>
+    </div>`;
+  }
+  const p = d.player;
+  return `<div class="rtile ${isCurrent?'current':''}">
+    <div class="team-hover">${team}</div>
+    <div class="pick-no">Pick #${d.pickInRound}</div>
+    <div class="pos-tag pos-${p.pos}">${p.pos}</div>
+    <div class="pname">${p.name}</div>
+    <div class="pteam">${p.nfl}</div>
+  </div>`;
+}
+
+document.getElementById('expandCurrentBtn').addEventListener('click', ()=> openRound(ON_CLOCK.round, ON_CLOCK.overall));
+
+document.getElementById('emailRosterBtn').addEventListener('click', ()=>{
+  const teamIdx = parseInt(document.getElementById('teamSelect').value || 0);
+  const teamName = TEAMS[teamIdx];
+  const email = (teamEmails[teamIdx] || '').trim();
+  const toast = document.getElementById('toast');
+  toast.textContent = email
+    ? `Would email ${teamName}'s roster to ${email}, via Resend, once the backend is connected.`
+    : `Add an email for ${teamName} in Admin → Team Owners first.`;
+  toast.classList.add('show');
+  setTimeout(()=>{ toast.classList.remove('show'); toast.textContent = 'Settings saved (prototype — not persisted)'; }, 3400);
+});
+document.getElementById('closeOverlay').addEventListener('click', ()=>{ overlay.classList.add('hidden'); openRoundNumber = null; });
+
+/* click-drag to scroll the carousel with mouse (desktop trackpads/touch already work natively) */
+(function enableDragScroll(el){
+  let isDown=false, startX, scrollLeft;
+  el.addEventListener('mousedown', (e)=>{ isDown=true; startX=e.pageX; scrollLeft=el.scrollLeft; });
+  window.addEventListener('mouseup', ()=> isDown=false);
+  window.addEventListener('mousemove', (e)=>{
+    if(!isDown) return;
+    el.scrollLeft = scrollLeft - (e.pageX - startX);
+  });
+})(carousel);
+
+/* ============================= TABS ============================= */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ============================= PLAYER LIST + QUEUE ============================= */
+let activeFilter = 'ALL';
+let hideDrafted = false;
+
+function renderPosFilters(){
+  const wrap = document.getElementById('posFilters');
+  const opts = ['ALL','QB','RB','WR','TE','K','DST'];
+  wrap.innerHTML = opts.map(o=>`<button class="filter-chip ${o===activeFilter?'active':''}" data-pos="${o}">${o}</button>`).join('');
+  wrap.querySelectorAll('.filter-chip').forEach(c=>{
+    c.addEventListener('click', ()=>{ activeFilter = c.dataset.pos; renderPosFilters(); renderPlayerTable(); });
+  });
+}
+
+function renderQueueTeamSelect(){
+  const sel = document.getElementById('queueTeamSelect');
+  sel.innerHTML = TEAMS.map((t,i)=>`<option value="${i}">${t}</option>`).join('');
+  sel.value = selectedQueueTeam;
+  sel.addEventListener('change', ()=>{
+    selectedQueueTeam = parseInt(sel.value);
+    renderPlayerTable();
+    renderQueue();
+    renderByRound();
+  });
+}
+
+function renderPlayerTable(){
+  const body = document.getElementById('playerTableBody');
+  const q = currentQueue();
+  const list = PLAYERS.filter(p=> (activeFilter==='ALL' || p.pos===activeFilter) && (!hideDrafted || !p.drafted))
+                      .sort((a,b)=>a.overallRank-b.overallRank)
+                      .slice(0,80);
+  body.innerHTML = list.map(p=>{
+    const inQueue = q.includes(p.id);
+    return `<tr>
+      <td class="rank-cell">${p.overallRank}</td>
+      <td>${p.name}</td>
+      <td><span class="pos-pill pos-${p.pos}">${p.pos}</span></td>
+      <td style="font-family:var(--font-mono); font-size:11.5px; color:var(--chalk-dim);">${p.nfl}</td>
+      <td style="font-family:var(--font-mono); font-size:11px; color:${p.drafted?'#e4572e':'var(--chalk-dim)'};">${p.drafted?'Drafted':'Available'}</td>
+      <td><button class="add-q-btn ${inQueue?'added':''}" data-id="${p.id}" ${p.drafted?'disabled':''}>${inQueue?'✓ Queued':'+ Queue'}</button></td>
+      <td><button class="draft-btn" data-id="${p.id}" ${(p.drafted || !ON_CLOCK || !canActFor(ON_CLOCK.teamIdx))?'disabled':''} title="${(ON_CLOCK && !canActFor(ON_CLOCK.teamIdx)) ? 'Only ' + TEAMS[ON_CLOCK.teamIdx] + ' or the admin can make this pick' : ''}">Draft</button></td>
+    </tr>`;
+  }).join('');
+
+  body.querySelectorAll('.add-q-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = parseInt(btn.dataset.id);
+      const q = currentQueue();
+      const idx = q.indexOf(id);
+      if(idx > -1){ q.splice(idx,1); } else { q.push(id); }
+      renderPlayerTable();
+      renderQueue();
+    });
+  });
+
+  body.querySelectorAll('.draft-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(!ON_CLOCK || !canActFor(ON_CLOCK.teamIdx)) return;
+      draftPlayer(parseInt(btn.dataset.id));
+    });
+  });
+}
+
+/* ---------- Drafting (manual or automatic) ---------- */
+function draftPlayer(playerId, isAuto){
+  if(!ON_CLOCK) return;
+  const p = playerById(playerId);
+  if(!p || p.drafted) return;
+
+  const completedPick = ON_CLOCK; // capture before advancing
+  p.drafted = true;
+  completedPick.player = p;
+  completedPick.auto = !!isAuto;
+  // a drafted player disappears from every team's queue, not just one
+  Object.keys(teamQueues).forEach(k => { teamQueues[k] = teamQueues[k].filter(id => id !== playerId); });
+  pickHistory.push(completedPick);
+
+  ON_CLOCK = DRAFT.find(d=>!d.player) || null;
+  lastChangedPick = completedPick;
+
+  refreshAfterDraftChange();
+  showPickModal(completedPick);
+}
+
+/* Called when the pick clock hits zero: draft from the on-the-clock team's queue
+   (respecting any round position preference), or best available if no queue is set. */
+function autoDraftOnClock(){
+  if(!ON_CLOCK) return;
+  const teamIdx = ON_CLOCK.teamIdx;
+  const q = teamQueues[teamIdx] || [];
+  const prefs = byRoundPrefsByTeam[teamIdx] || {};
+  const wantedPos = prefs[ON_CLOCK.round]; // undefined or 'BPA' means no preference
+
+  let chosen = null;
+
+  if(wantedPos && wantedPos !== 'BPA'){
+    // look for the first queued player at the preferred position
+    chosen = q.map(playerById).find(p => p && !p.drafted && p.pos === wantedPos);
+    // fall back to best available at that position if none queued
+    if(!chosen){
+      chosen = PLAYERS.filter(p=>!p.drafted && p.pos===wantedPos).sort((a,b)=>a.overallRank-b.overallRank)[0];
+    }
+  } else {
+    // no position preference: take the first still-available player in the queue, in order
+    chosen = q.map(playerById).find(p => p && !p.drafted);
+  }
+
+  // no queue set up (or queue exhausted): auto-draft the next best available player overall
+  if(!chosen){
+    chosen = PLAYERS.filter(p=>!p.drafted).sort((a,b)=>a.overallRank-b.overallRank)[0];
+  }
+
+  if(chosen) draftPlayer(chosen.id, true);
+}
+
+function undoLastPick(){
+  if(!isAdmin()) return;
+  if(pickHistory.length === 0) return;
+  const last = pickHistory.pop();
+  last.player.drafted = false;
+  last.player = null;
+  last.auto = false;
+  ON_CLOCK = last;
+  lastChangedPick = last;
+  closePickModal();
+  refreshAfterDraftChange();
+}
+
+let lastChangedPick = null; // the pick that was just drafted/undone, used to auto-advance an open round view
+
+function refreshAfterDraftChange(){
+  const clockStrip = document.querySelector('.clock-strip');
+  if(ON_CLOCK){
+    clockStrip.innerHTML =
+      '<span class="dot"></span><span>ON THE CLOCK — <b>' + TEAMS[ON_CLOCK.teamIdx] + '</b> · Round ' + ON_CLOCK.round +
+      ', Pick ' + ON_CLOCK.pickInRound + ' (Overall #' + ON_CLOCK.overall + ')</span>' +
+      '<button class="pick-clock-pause" id="pickClockPauseBtn" title="Pause the pick clock">⏸</button>' +
+      '<span class="pick-clock-badge" id="pickClockDisplay"></span>';
+    clockStrip.style.display = 'flex';
+  } else {
+    clockStrip.innerHTML =
+      '<span style="font-family:var(--font-mono); font-size:13px; color:var(--amber);">Draft complete — all picks are in.</span>';
+  }
+
+  renderFullBoard();
+  renderPlayerTable();
+  renderQueue();
+  renderRoster(parseInt(document.getElementById('teamSelect').value || 0));
+  updateUndoBox();
+  if(ON_CLOCK) playTeamMusic(ON_CLOCK.teamIdx); else stopTeamMusic();
+  startPickClock();
+
+  // If a round view is open and it's the round that just changed, follow the action:
+  // re-center on the new on-the-clock pick if it's still in this round.
+  if(!overlay.classList.contains('hidden') && lastChangedPick && openRoundNumber === lastChangedPick.round){
+    const stillOnClockHere = ON_CLOCK && ON_CLOCK.round === openRoundNumber;
+    openRound(openRoundNumber, stillOnClockHere ? ON_CLOCK.overall : lastChangedPick.overall, true);
+  }
+}
+
+/* ---------- Pick clock ---------- */
+let clockPaused = false;
+let clockRunoff = false;
+let runoffRemaining = 0;
+const RUNOFF_SECONDS = 5;
+
+function getClockBadges(){
+  return [document.getElementById('pickClockDisplay'), document.getElementById('pickClockDisplayRound')].filter(Boolean);
+}
+function getPauseButtons(){
+  return [document.getElementById('pickClockPauseBtn'), document.getElementById('pickClockPauseBtnRound')].filter(Boolean);
+}
+
+function startPickClock(){
+  clearInterval(clockCountdownInterval);
+  clockPaused = false;
+  clockRunoff = false;
+  const badges = getClockBadges();
+  const pauseBtns = getPauseButtons();
+  if(!badges.length) return;
+  if(!pickClockEnabled || !ON_CLOCK){
+    badges.forEach(b=>{ b.textContent = ''; b.classList.remove('paused','runoff','low'); });
+    pauseBtns.forEach(b=> b.style.display = 'none');
+    return;
+  }
+  pauseBtns.forEach(b=>{
+    b.style.display = 'inline-flex';
+    b.textContent = '⏸';
+    b.onclick = togglePauseClock;
+  });
+  clockRemaining = pickClockSeconds;
+  renderClockBadge();
+  runClockInterval();
+}
+
+function runClockInterval(){
+  clearInterval(clockCountdownInterval);
+  clockCountdownInterval = setInterval(()=>{
+    if(!clockRunoff){
+      clockRemaining--;
+      if(clockRemaining <= 0){
+        // main countdown hit zero — start a 5-second runoff before actually autodrafting
+        clockRunoff = true;
+        runoffRemaining = RUNOFF_SECONDS;
+      }
+    } else {
+      runoffRemaining--;
+      if(runoffRemaining <= 0){
+        clearInterval(clockCountdownInterval);
+        renderClockBadge();
+        autoDraftOnClock();
+        return;
+      }
+    }
+    renderClockBadge();
+  }, 1000);
+}
+
+function togglePauseClock(){
+  if(!isAdmin()) return;
+  if(!pickClockEnabled || !ON_CLOCK) return;
+  clockPaused = !clockPaused;
+  const pauseBtns = getPauseButtons();
+  if(clockPaused){
+    clearInterval(clockCountdownInterval);
+    pauseBtns.forEach(b=> b.textContent = '▶');
+  } else {
+    pauseBtns.forEach(b=> b.textContent = '⏸');
+    runClockInterval();
+  }
+  renderClockBadge();
+}
+
+function renderClockBadge(){
+  const badges = getClockBadges();
+  if(!badges.length) return;
+  if(clockRunoff){
+    badges.forEach(badge=>{
+      badge.textContent = (clockPaused ? '⏸ PAUSED — ' : '⏱ ') + 'AUTO-DRAFTING IN ' + Math.max(runoffRemaining, 0) + 's';
+      badge.classList.remove('low');
+      badge.classList.toggle('runoff', !clockPaused);
+      badge.classList.toggle('paused', clockPaused);
+    });
+    return;
+  }
+  const m = Math.floor(clockRemaining/60);
+  const s = clockRemaining % 60;
+  badges.forEach(badge=>{
+    badge.textContent = (clockPaused ? '⏸ ' : '⏱ ') + m + ':' + String(s).padStart(2,'0');
+    badge.classList.remove('runoff');
+    badge.classList.toggle('paused', clockPaused);
+    badge.classList.toggle('low', clockRemaining <= 10 && !clockPaused);
+  });
+}
+
+function updateUndoBox(){
+  const btn = document.getElementById('undoBtn');
+  const info = document.getElementById('undoInfo');
+  if(pickHistory.length === 0){
+    info.innerHTML = 'No picks made yet.';
+    btn.disabled = true;
+    return;
+  }
+  const last = pickHistory[pickHistory.length - 1];
+  info.innerHTML = 'Last pick: <b>' + TEAMS[last.teamIdx] + '</b> selected <b>' + last.player.name +
+    '</b> (' + last.player.pos + ')' + (last.auto ? ' <i>(auto-drafted)</i>' : '') + ' — Overall #' + last.overall;
+  btn.disabled = !isAdmin();
+}
+document.getElementById('undoBtn').addEventListener('click', undoLastPick);
+
+/* ---------- Big pick announcement modal (shows on every draft, any tab) ---------- */
+let pickModalTimer = null;
+function showPickModal(pick){
+  const p = pick.player;
+  document.getElementById('pmOverall').textContent = pick.overall;
+  document.getElementById('pmRound').textContent = pick.round;
+  document.getElementById('pmPickInRound').textContent = pick.pickInRound;
+  document.getElementById('pmTeam').textContent = TEAMS[pick.teamIdx] + (pick.auto ? ' — Auto-Drafted' : '');
+  const posEl = document.getElementById('pmPos');
+  posEl.textContent = p.pos;
+  posEl.className = 'pm-pos pos-' + p.pos;
+  document.getElementById('pmName').textContent = p.name;
+  document.getElementById('pmNfl').textContent = p.nfl;
+
+  const backdrop = document.getElementById('pickModalBackdrop');
+  backdrop.classList.remove('hidden');
+  requestAnimationFrame(()=> backdrop.classList.add('show'));
+
+  clearTimeout(pickModalTimer);
+
+  if(announcerEnabled && typeof speechSynthesis !== 'undefined'){
+    // safety net in case the browser never fires the speech "end" event
+    pickModalTimer = setTimeout(closePickModal, 12000);
+    announcePick(pick, () => { clearTimeout(pickModalTimer); closePickModal(); });
+  } else {
+    pickModalTimer = setTimeout(closePickModal, 4000);
+  }
+}
+function closePickModal(){
+  const backdrop = document.getElementById('pickModalBackdrop');
+  backdrop.classList.remove('show');
+  setTimeout(()=> backdrop.classList.add('hidden'), 250);
+  clearTimeout(pickModalTimer);
+}
+document.getElementById('pmClose').addEventListener('click', closePickModal);
+document.getElementById('pickModalBackdrop').addEventListener('click', (e)=>{
+  if(e.target.id === 'pickModalBackdrop') closePickModal();
+});
+
+function renderQueue(){
+  const list = document.getElementById('queueList');
+  const note = document.getElementById('queueEmptyNote');
+  const q = currentQueue();
+  if(q.length===0){
+    list.innerHTML=''; note.style.display='block'; return;
+  }
+  note.style.display='none';
+  list.innerHTML = q.map((id,i)=>{
+    const p = playerById(id);
+    return `<li class="queue-item">
+      <span class="qnum">${i+1}</span>
+      <span class="qname">${p.name}</span>
+      <span class="qpos pos-${p.pos}">${p.pos}</span>
+      <button class="qmove" data-dir="up" data-id="${id}">▲</button>
+      <button class="qmove" data-dir="down" data-id="${id}">▼</button>
+      <button class="qremove" data-id="${id}">✕</button>
+    </li>`;
+  }).join('');
+
+  list.querySelectorAll('.qmove').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = parseInt(btn.dataset.id);
+      const q = currentQueue();
+      const i = q.indexOf(id);
+      const dir = btn.dataset.dir;
+      if(dir==='up' && i>0){ [q[i-1],q[i]]=[q[i],q[i-1]]; }
+      if(dir==='down' && i<q.length-1){ [q[i+1],q[i]]=[q[i],q[i+1]]; }
+      renderQueue();
+    });
+  });
+  list.querySelectorAll('.qremove').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const q = currentQueue();
+      const id = parseInt(btn.dataset.id);
+      const idx = q.indexOf(id);
+      if(idx > -1) q.splice(idx,1);
+      renderQueue(); renderPlayerTable();
+    });
+  });
+}
+
+function renderByRound(){
+  const body = document.getElementById('byRoundBody');
+  const prefs = currentByRoundPrefs();
+  let rows = '';
+  for(let r=1;r<=15;r++){
+    const val = prefs[r] || 'BPA';
+    rows += `<tr><td>${r}</td><td>
+      <select data-round="${r}">
+        <option value="BPA" ${val==='BPA'?'selected':''}>Best Available</option>
+        <option value="QB" ${val==='QB'?'selected':''}>QB</option>
+        <option value="RB" ${val==='RB'?'selected':''}>RB</option>
+        <option value="WR" ${val==='WR'?'selected':''}>WR</option>
+        <option value="TE" ${val==='TE'?'selected':''}>TE</option>
+        <option value="K" ${val==='K'?'selected':''}>K</option>
+        <option value="DST" ${val==='DST'?'selected':''}>DST</option>
+      </select>
+    </td></tr>`;
+  }
+  body.innerHTML = rows;
+  body.querySelectorAll('select').forEach(sel=>{
+    sel.addEventListener('change', ()=>{ currentByRoundPrefs()[sel.dataset.round] = sel.value; });
+  });
+}
+
+document.querySelectorAll('.queue-toggle button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.queue-toggle button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    if(btn.dataset.qview==='total'){
+      document.getElementById('queueTotalView').style.display='block';
+      document.getElementById('queueByPosView').style.display='none';
+    } else {
+      document.getElementById('queueTotalView').style.display='none';
+      document.getElementById('queueByPosView').style.display='block';
+    }
+  });
+});
+
+document.getElementById('hideDraftedToggle').addEventListener('change', (e)=>{
+  hideDrafted = e.target.checked;
+  renderPlayerTable();
+});
+
+/* ============================= MY TEAM ============================= */
+/* Starter slots are built live from the Admin tab's "Roster Requirements" — see rosterCounts. */
+function getRosterTemplate(){
+  const order = ['QB','RB','WR','TE','FLEX','DST','K'];
+  const template = [];
+  order.forEach(pos=>{
+    const count = rosterCounts[pos] || 0;
+    for(let i=0;i<count;i++){
+      template.push({ pos, sub: pos==='FLEX' ? 'RB / WR / TE' : null });
+    }
+  });
+  return template;
+}
+
+function teamPicks(teamIdx){
+  return DRAFT.filter(d=>d.teamIdx===teamIdx && d.player).map(d=>d.player);
+}
+
+function renderTeamSelect(){
+  const sel = document.getElementById('teamSelect');
+  sel.innerHTML = TEAMS.map((t,i)=>`<option value="${i}">${t}</option>`).join('');
+  sel.addEventListener('change', ()=> renderRoster(parseInt(sel.value)));
+}
+
+function renderRoster(teamIdx){
+  const template = getRosterTemplate();
+  const benchCount = Math.max(totalRounds - template.length, 0);
+  const picks = teamPicks(teamIdx).slice(); // clone, consume as we fill slots
+  const used = new Set();
+  let html = '<div class="section-label">Starters</div><div class="roster-grid">';
+
+  template.forEach(slot=>{
+    let match;
+    if(slot.pos==='FLEX'){
+      match = picks.find(p=> !used.has(p.id) && ['RB','WR','TE'].includes(p.pos));
+    } else {
+      match = picks.find(p=> !used.has(p.id) && p.pos===slot.pos);
+    }
+    if(match) used.add(match.id);
+    html += slotHTML(slot.pos, slot.sub, match);
+  });
+  html += '</div>';
+
+  html += '<div class="section-label">Bench</div><div class="roster-grid">';
+  const remaining = picks.filter(p=>!used.has(p.id));
+  for(let i=0;i<benchCount;i++){
+    html += slotHTML('BN', null, remaining[i]);
+  }
+  html += '</div>';
+
+  document.getElementById('rosterOutput').innerHTML = html;
+}
+
+function slotHTML(posCode, sub, player){
+  const badge = `<div class="slot-pos-badge pos-${posCode}">${posCode}</div>`;
+  const subHTML = sub ? `<div class="slot-sub">${sub}</div>` : '';
+  if(!player){
+    return `<div class="slot open">
+      ${badge}${subHTML}
+      <div class="slot-name open">— open —</div>
+      <div class="slot-team"></div>
+    </div>`;
+  }
+  return `<div class="slot filled">
+    ${badge}${subHTML}
+    <div class="slot-name">${player.name}</div>
+    <div class="slot-team">${player.pos} · ${player.nfl}</div>
+  </div>`;
+}
+
+/* ============================= ADMIN TAB ============================= */
+
+function renderAdminOrder(){
+  const list = document.getElementById('orderList');
+  list.innerHTML = adminOrder.map((t,i)=>`
+    <li class="order-item" draggable="true" data-i="${i}">
+      <span class="drag-handle">⠿</span>
+      <span class="num">${i+1}</span>
+      <span class="name">${t}</span>
+      <button data-dir="up" data-i="${i}">▲</button>
+      <button data-dir="down" data-i="${i}">▼</button>
+    </li>
+  `).join('');
+
+  list.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const i = parseInt(btn.dataset.i);
+      const dir = btn.dataset.dir;
+      if(dir==='up' && i>0){ [adminOrder[i-1],adminOrder[i]]=[adminOrder[i],adminOrder[i-1]]; }
+      if(dir==='down' && i<adminOrder.length-1){ [adminOrder[i+1],adminOrder[i]]=[adminOrder[i],adminOrder[i+1]]; }
+      renderAdminOrder();
+    });
+  });
+
+  let dragSrc = null;
+  list.querySelectorAll('.order-item').forEach(item=>{
+    item.addEventListener('dragstart', ()=>{ dragSrc = parseInt(item.dataset.i); });
+    item.addEventListener('dragover', (e)=> e.preventDefault());
+    item.addEventListener('drop', ()=>{
+      const target = parseInt(item.dataset.i);
+      const moved = adminOrder.splice(dragSrc,1)[0];
+      adminOrder.splice(target,0,moved);
+      renderAdminOrder();
+    });
+  });
+}
+
+let rosterCounts = { QB:1, RB:2, WR:3, TE:0, FLEX:1, DST:1, K:1 };
+let totalRounds = 15;
+
+function renderRosterConfig(){
+  const wrap = document.getElementById('rosterConfig');
+  wrap.innerHTML = Object.keys(rosterCounts).map(pos=>`
+    <div class="rc-item pos-${pos}">
+      <span class="pos-pill">${pos}</span>
+      <input type="number" min="0" max="6" value="${rosterCounts[pos]}" data-pos="${pos}">
+    </div>
+  `).join('');
+  wrap.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      rosterCounts[inp.dataset.pos] = parseInt(inp.value || 0);
+      updateBenchCount();
+      refreshMyTeamRoster();
+    });
+  });
+  updateBenchCount();
+}
+
+function refreshMyTeamRoster(){
+  const sel = document.getElementById('teamSelect');
+  if(sel) renderRoster(parseInt(sel.value || 0));
+}
+
+function updateBenchCount(){
+  const starters = Object.values(rosterCounts).reduce((a,b)=>a+b,0);
+  const bench = Math.max(totalRounds - starters, 0);
+  document.getElementById('starterCount').textContent = starters;
+  document.getElementById('benchCount').textContent = bench;
+}
+
+function renderCustomRoundsList(){
+  const wrap = document.getElementById('customRoundsList');
+  let html = '';
+  for(let r=1; r<=totalRounds; r++){
+    const dir = customDirections[r] || (r % 2 === 1 ? 'forward' : 'reverse');
+    html += `<div class="cr-item">
+      <span class="cr-round">Round ${r}</span>
+      <button class="cr-dir-btn ${dir}" data-round="${r}">${dir==='forward' ? 'Forward' : 'Reverse'}</button>
+    </div>`;
+  }
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('.cr-dir-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const r = parseInt(btn.dataset.round);
+      const cur = customDirections[r] || (r % 2 === 1 ? 'forward' : 'reverse');
+      const next = cur === 'forward' ? 'reverse' : 'forward';
+      customDirections[r] = next;
+      btn.textContent = next === 'forward' ? 'Forward' : 'Reverse';
+      btn.className = 'cr-dir-btn ' + next;
+    });
+  });
+}
+
+/* ---------- Team walk-up music ---------- */
+function renderMusicList(){
+  const wrap = document.getElementById('musicList');
+  wrap.innerHTML = TEAMS.map((team, i) => {
+    const song = teamMusic[i];
+    return `<div class="music-row">
+      <span class="m-team">${team}</span>
+      <label class="m-file-label">
+        ${song ? 'Change song' : 'Upload song'}
+        <input type="file" accept="audio/*" data-team="${i}">
+      </label>
+      <span class="m-filename">${song ? song.name : 'No song set'}</span>
+      ${song ? `<button class="m-btn preview" data-team="${i}">▶ Preview</button>` : ''}
+      ${song ? `<button class="m-btn remove" data-team="${i}">✕ Remove</button>` : ''}
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('input[type=file]').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const teamIdx = parseInt(inp.dataset.team);
+      const file = inp.files[0];
+      if(!file) return;
+      const old = teamMusic[teamIdx];
+      if(old) URL.revokeObjectURL(old.url);
+      teamMusic[teamIdx] = { name: file.name, url: URL.createObjectURL(file) };
+      renderMusicList();
+    });
+  });
+  wrap.querySelectorAll('.m-btn.preview').forEach(btn=>{
+    btn.addEventListener('click', ()=> playTeamMusic(parseInt(btn.dataset.team)));
+  });
+  wrap.querySelectorAll('.m-btn.remove').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const teamIdx = parseInt(btn.dataset.team);
+      const old = teamMusic[teamIdx];
+      if(old) URL.revokeObjectURL(old.url);
+      delete teamMusic[teamIdx];
+      if(ON_CLOCK && ON_CLOCK.teamIdx === teamIdx) stopTeamMusic();
+      renderMusicList();
+    });
+  });
+}
+
+function playTeamMusic(teamIdx){
+  const player = document.getElementById('teamMusicPlayer');
+  const song = teamMusic[teamIdx];
+  if(!song || musicMuted){ player.pause(); return; }
+  if(player.src !== song.url){ player.src = song.url; }
+  player.currentTime = 0;
+  player.play().catch(()=>{ /* browser blocked autoplay until a user gesture — fine, Preview button still works */ });
+}
+
+function stopTeamMusic(){
+  const player = document.getElementById('teamMusicPlayer');
+  player.pause();
+}
+
+/* ---------- Team owners (placeholders for Supabase + Resend) ---------- */
+function renderOwnerList(){
+  const wrap = document.getElementById('ownerList');
+  wrap.innerHTML = TEAMS.map((team, i) => {
+    const email = teamEmails[i] || '';
+    const hasEmail = !!email;
+    return `<div class="owner-row">
+      <span class="o-team">${team}</span>
+      <input type="text" placeholder="owner@email.com" value="${email}" data-team="${i}">
+      <span class="o-status ${hasEmail ? 'set' : 'unset'}">${hasEmail ? 'Email on file' : 'Not set'}</span>
+      <button class="m-btn" data-team="${i}">✉ Send Invite</button>
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('input[type=text]').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const teamIdx = parseInt(inp.dataset.team);
+      teamEmails[teamIdx] = inp.value;
+      const row = inp.closest('.owner-row');
+      const statusEl = row.querySelector('.o-status');
+      const hasEmail = !!inp.value.trim();
+      statusEl.textContent = hasEmail ? 'Email on file' : 'Not set';
+      statusEl.className = 'o-status ' + (hasEmail ? 'set' : 'unset');
+    });
+  });
+  wrap.querySelectorAll('.m-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const teamIdx = parseInt(btn.dataset.team);
+      const email = (teamEmails[teamIdx] || '').trim();
+      if(!email){
+        showOwnerActionNote(`Add an email for ${TEAMS[teamIdx]} first.`);
+        return;
+      }
+      showOwnerActionNote(`Would send an invite to ${email} for ${TEAMS[teamIdx]}, via Resend, once the backend is connected.`);
+    });
+  });
+}
+
+let ownerNoteTimer = null;
+function showOwnerActionNote(text){
+  const note = document.getElementById('ownerActionNote');
+  note.textContent = text;
+  clearTimeout(ownerNoteTimer);
+  ownerNoteTimer = setTimeout(()=>{ note.textContent = ''; }, 6000);
+}
+
+/* ---------- Voice announcer (browser TTS test) ---------- */
+function populateVoiceList(){
+  const sel = document.getElementById('announcerVoiceSelect');
+  const note = document.getElementById('announcerNote');
+  if(!sel || typeof speechSynthesis === 'undefined'){
+    if(note) note.textContent = 'Speech synthesis is not available in this browser.';
+    return;
+  }
+  const voices = speechSynthesis.getVoices();
+  if(!voices.length) return; // will retry via onvoiceschanged
+
+  const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+  const list = englishVoices.length ? englishVoices : voices;
+
+  sel.innerHTML = list.map(v => `<option value="${v.voiceURI}">${v.name} (${v.lang})</option>`).join('');
+  // prefer a voice that sounds less robotic if one is available (varies a lot by OS/browser)
+  const preferred = list.find(v => /natural|neural|enhanced|premium|google/i.test(v.name));
+  announcerVoiceURI = (preferred || list[0]).voiceURI;
+  sel.value = announcerVoiceURI;
+  if(note) note.textContent = `${list.length} voice${list.length===1?'':'s'} available on this device/browser.`;
+
+  sel.onchange = () => { announcerVoiceURI = sel.value; };
+}
+
+function playCrowdNoise(){
+  try{
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    const duration = 2.2;
+    const bufferSize = ctx.sampleRate * duration;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++){ data[i] = (Math.random() * 2 - 1); }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 1200;
+    filter.Q.value = 0.6;
+
+    const gain = ctx.createGain();
+    const now = ctx.currentTime;
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.35, now + 0.25);
+    gain.gain.linearRampToValueAtTime(0.22, now + 1.0);
+    gain.gain.linearRampToValueAtTime(0, now + duration);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start(now);
+    noise.stop(now + duration);
+  } catch(e){ /* Web Audio not available — skip crowd noise, announcer voice still works */ }
+}
+
+const POS_SPOKEN = {
+  QB: 'quarterback', RB: 'running back', WR: 'wide receiver', TE: 'tight end',
+  K: 'kicker', DST: 'defense', FLEX: 'flex'
+};
+const NFL_TEAM_SPOKEN = {
+  ARI:'Arizona', ATL:'Atlanta', BAL:'Baltimore', BUF:'Buffalo', CAR:'Carolina',
+  CHI:'Chicago', CIN:'Cincinnati', CLE:'Cleveland', DAL:'Dallas', DEN:'Denver',
+  DET:'Detroit', GB:'Green Bay', HOU:'Houston', IND:'Indianapolis', JAC:'Jacksonville',
+  JAX:'Jacksonville', KC:'Kansas City', LAC:'the Chargers', LAR:'the Rams', LV:'Las Vegas',
+  MIA:'Miami', MIN:'Minnesota', NE:'New England', NO:'New Orleans', NYG:'the Giants',
+  NYJ:'the Jets', PHI:'Philadelphia', PIT:'Pittsburgh', SEA:'Seattle', SF:'San Francisco',
+  TB:'Tampa Bay', TEN:'Tennessee', WAS:'Washington'
+};
+
+function announcePick(pick, onFinish){
+  if(typeof speechSynthesis === 'undefined'){ if(onFinish) onFinish(); return; }
+  const p = pick.player;
+  const posSpoken = POS_SPOKEN[p.pos] || p.pos;
+  const teamSpoken = NFL_TEAM_SPOKEN[p.nfl];
+  const line = pick.auto
+    ? `Auto pick. ${TEAMS[pick.teamIdx]} takes ${p.name}, ${posSpoken}.`
+    : `With the next pick, ${TEAMS[pick.teamIdx]} selects ${p.name}, ${posSpoken}${teamSpoken ? ', from ' + teamSpoken : ''}.`;
+
+  playCrowdNoise();
+  speechSynthesis.cancel(); // don't queue up behind a previous announcement
+  const utter = new SpeechSynthesisUtterance(line);
+  const voices = speechSynthesis.getVoices();
+  const voice = voices.find(v => v.voiceURI === announcerVoiceURI);
+  if(voice) utter.voice = voice;
+  utter.rate = 1.0;
+  utter.pitch = 1.0;
+  if(onFinish){
+    utter.onend = onFinish;
+    utter.onerror = onFinish;
+  }
+  setTimeout(()=> speechSynthesis.speak(utter), 300); // let the crowd noise swell in first
+}
+
+function previewAnnouncer(){
+  announcePick({
+    teamIdx: 0,
+    auto: false,
+    player: { name: 'Ja\'Marr Chase', pos: 'WR', nfl: 'CIN' }
+  });
+}
+
+/* ============================= LOGIN / ACCOUNTS ============================= */
+let loginMatchedTeamIdx = null; // set during the email-confirm step
+
+function renderAccountArea(){
+  const area = document.getElementById('accountArea');
+  if(!currentUser){
+    area.innerHTML = `<button class="login-open-btn" id="loginOpenBtn">Log In</button>`;
+    document.getElementById('loginOpenBtn').addEventListener('click', openLoginModal);
+    return;
+  }
+  if(currentUser.type === 'admin'){
+    area.innerHTML = `
+      <div class="account-badge"><span class="role-tag admin">Admin</span> <b>Draft Admin</b></div>
+      <button class="logout-link" id="logoutBtn">Log Out</button>`;
+  } else {
+    area.innerHTML = `
+      <div class="account-badge"><span class="role-tag">Owner</span> <b>${TEAMS[currentUser.teamIdx]}</b></div>
+      <button class="logout-link" id="logoutBtn">Log Out</button>`;
+  }
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+}
+
+function openLoginModal(){
+  document.getElementById('loginModalBackdrop').classList.remove('hidden');
+  document.getElementById('loginStepEmail').style.display = 'block';
+  document.getElementById('loginStepConfirm').style.display = 'none';
+  document.getElementById('loginEmailInput').value = '';
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('loginEmailInput').focus();
+}
+function closeLoginModal(){
+  document.getElementById('loginModalBackdrop').classList.add('hidden');
+}
+
+function attemptLogin(){
+  const email = document.getElementById('loginEmailInput').value.trim().toLowerCase();
+  const errEl = document.getElementById('loginError');
+  if(!email){ errEl.textContent = 'Enter your email address.'; return; }
+
+  if(adminEmail && email === adminEmail.trim().toLowerCase()){
+    setCurrentUser({ type: 'admin' });
+    closeLoginModal();
+    return;
+  }
+
+  const matchIdx = Object.keys(teamEmails).map(Number).find(i =>
+    (teamEmails[i] || '').trim().toLowerCase() === email
+  );
+
+  if(matchIdx === undefined){
+    errEl.textContent = "We don't have a team or admin on file with that email — check with your commissioner.";
+    return;
+  }
+
+  errEl.textContent = '';
+  loginMatchedTeamIdx = matchIdx;
+  document.getElementById('loginTeamConfirm').textContent = TEAMS[matchIdx];
+  document.getElementById('loginStepEmail').style.display = 'none';
+  document.getElementById('loginStepConfirm').style.display = 'block';
+}
+
+function confirmLogin(){
+  setCurrentUser({ type: 'team', teamIdx: loginMatchedTeamIdx });
+  closeLoginModal();
+}
+
+function setCurrentUser(user){
+  currentUser = user;
+  try{ localStorage.setItem('fg2_currentUser', JSON.stringify(user)); }catch(e){}
+  applyLoginState();
+}
+
+function logout(){
+  currentUser = null;
+  try{ localStorage.removeItem('fg2_currentUser'); }catch(e){}
+  applyLoginState();
+}
+
+function restoreLoginFromStorage(){
+  try{
+    const raw = localStorage.getItem('fg2_currentUser');
+    if(raw) currentUser = JSON.parse(raw);
+  }catch(e){ currentUser = null; }
+}
+
+/* Applies role-based gating: Admin tab, Undo, Pause, Draft button, and locks a
+   logged-in team owner's "Queueing as" selector to their own team. */
+function applyLoginState(){
+  renderAccountArea();
+
+  const adminBtn = document.getElementById('adminTabBtn');
+  if(isAdmin()){
+    adminBtn.style.display = '';
+  } else {
+    adminBtn.style.display = 'none';
+    if(document.getElementById('tab-admin').classList.contains('active')){
+      document.querySelector('.tab-btn[data-tab="board"]').click();
+    }
+  }
+
+  const undoBtn = document.getElementById('undoBtn');
+  if(undoBtn){
+    undoBtn.title = isAdmin() ? '' : 'Admin only';
+  }
+  getPauseButtons().forEach(pauseBtn=>{
+    pauseBtn.style.opacity = isAdmin() ? '1' : '.4';
+    pauseBtn.style.pointerEvents = isAdmin() ? 'auto' : 'none';
+    pauseBtn.title = isAdmin() ? 'Pause the pick clock' : 'Admin only';
+  });
+
+  const qSel = document.getElementById('queueTeamSelect');
+  if(currentUser && currentUser.type === 'team'){
+    selectedQueueTeam = currentUser.teamIdx;
+    if(qSel){ qSel.value = currentUser.teamIdx; qSel.disabled = true; }
+  } else if(qSel){
+    qSel.disabled = false;
+  }
+
+  updateUndoBox();
+  renderPlayerTable();
+  renderQueue();
+  renderByRound();
+}
+
+document.getElementById('loginModalClose').addEventListener('click', closeLoginModal);
+document.getElementById('loginContinueBtn').addEventListener('click', attemptLogin);
+document.getElementById('loginConfirmBtn').addEventListener('click', confirmLogin);
+document.getElementById('loginBackBtn').addEventListener('click', openLoginModal);
+document.getElementById('loginEmailInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter') attemptLogin(); });
+document.getElementById('loginModalBackdrop').addEventListener('click', (e)=>{
+  if(e.target.id === 'loginModalBackdrop') closeLoginModal();
+});
+
+function initAdminTab(){
+  renderAdminOrder();
+  renderRosterConfig();
+  renderCustomRoundsList();
+  renderMusicList();
+  renderOwnerList();
+
+  document.getElementById('adminEmailInput').value = adminEmail;
+  document.getElementById('adminEmailInput').addEventListener('input', (e)=>{
+    adminEmail = e.target.value;
+  });
+  document.getElementById('emailAllInvitesBtn').addEventListener('click', ()=>{
+    const count = Object.values(teamEmails).filter(e => (e || '').trim()).length;
+    showOwnerActionNote(`Would send an invite email to all ${count} owner(s) with an email on file, via Resend, once the backend is connected.`);
+  });
+  document.getElementById('emailResultsBtn').addEventListener('click', ()=>{
+    showOwnerActionNote('Would email the full draft results to every owner with an email on file, via Resend, once the backend is connected.');
+  });
+  document.getElementById('emailBoardBtn').addEventListener('click', ()=>{
+    const count = Object.values(teamEmails).filter(e => (e || '').trim()).length;
+    const note = document.getElementById('emailBoardNote');
+    note.textContent = `Would email the full draft board to all ${count} owner(s) with an email on file, via Resend, once the backend is connected.`;
+    clearTimeout(note._t);
+    note._t = setTimeout(()=>{ note.textContent = ''; }, 6000);
+  });
+
+  document.getElementById('musicMuteInput').addEventListener('change', (e)=>{
+    musicMuted = e.target.checked;
+    const player = document.getElementById('teamMusicPlayer');
+    if(musicMuted){ player.pause(); }
+    else if(ON_CLOCK && teamMusic[ON_CLOCK.teamIdx]){ playTeamMusic(ON_CLOCK.teamIdx); }
+  });
+
+  document.getElementById('announcerEnabledInput').addEventListener('change', (e)=>{
+    announcerEnabled = e.target.checked;
+  });
+  document.getElementById('announcerPreviewBtn').addEventListener('click', previewAnnouncer);
+  populateVoiceList();
+  if(typeof speechSynthesis !== 'undefined'){
+    speechSynthesis.onvoiceschanged = populateVoiceList;
+  }
+
+  document.querySelectorAll('input[name="draftType"]').forEach(radio=>{
+    radio.addEventListener('change', ()=>{
+      draftType = radio.value;
+      document.querySelectorAll('.dt-option').forEach(l=>l.classList.remove('active'));
+      radio.closest('.dt-option').classList.add('active');
+      document.getElementById('customRoundsWrap').style.display = (draftType === 'custom') ? 'block' : 'none';
+      if(draftType === 'custom') renderCustomRoundsList();
+    });
+  });
+  document.querySelector('input[name="draftType"]:checked').closest('.dt-option').classList.add('active');
+
+  document.getElementById('clockEnabledInput').addEventListener('change', (e)=>{
+    pickClockEnabled = e.target.checked;
+    startPickClock();
+  });
+  document.getElementById('clockSecondsInput').addEventListener('input', (e)=>{
+    const v = parseInt(e.target.value || 90);
+    pickClockSeconds = Math.max(5, v);
+    startPickClock();
+  });
+
+  document.getElementById('applyDraftBtn').addEventListener('click', ()=>{
+    buildDraft();
+    document.getElementById('roundOverlay').classList.add('hidden');
+    openRoundNumber = null;
+    closePickModal();
+    refreshAfterDraftChange();
+    const toast = document.getElementById('toast');
+    const prevText = toast.textContent;
+    toast.textContent = 'Draft order applied — board rebuilt.';
+    toast.classList.add('show');
+    setTimeout(()=>{ toast.classList.remove('show'); toast.textContent = prevText; }, 2600);
+  });
+
+  document.getElementById('roundsMinus').addEventListener('click', ()=>{
+    if(totalRounds > 1){
+      totalRounds--; document.getElementById('roundsCount').textContent = totalRounds; updateBenchCount();
+      if(draftType === 'custom') renderCustomRoundsList();
+      refreshMyTeamRoster();
+    }
+  });
+  document.getElementById('roundsPlus').addEventListener('click', ()=>{
+    totalRounds++; document.getElementById('roundsCount').textContent = totalRounds; updateBenchCount();
+    if(draftType === 'custom') renderCustomRoundsList();
+    refreshMyTeamRoster();
+  });
+
+  const dropzone = document.getElementById('dropzone');
+  const csvInput = document.getElementById('csvInput');
+  dropzone.addEventListener('click', ()=> csvInput.click());
+  dropzone.addEventListener('dragover', (e)=>{ e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', ()=> dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e)=>{
+    e.preventDefault(); dropzone.classList.remove('drag');
+    if(e.dataTransfer.files.length) handleCSV(e.dataTransfer.files[0]);
+  });
+  csvInput.addEventListener('change', ()=>{
+    if(csvInput.files.length) handleCSV(csvInput.files[0]);
+  });
+
+  document.getElementById('saveBtn').addEventListener('click', ()=>{
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(()=> toast.classList.remove('show'), 2200);
+  });
+}
+
+function parseCSVLine(line){
+  // minimal CSV parser that respects quoted fields containing commas
+  const result = [];
+  let cur = '';
+  let inQuotes = false;
+  for(let i=0;i<line.length;i++){
+    const ch = line[i];
+    if(ch === '"'){
+      if(inQuotes && line[i+1] === '"'){ cur += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if(ch === ',' && !inQuotes){
+      result.push(cur.trim()); cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function handleCSV(file){
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const lines = e.target.result.split(/\r?\n/).filter(r=>r.trim().length);
+    const parsed = lines.map(parseCSVLine);
+    const header = parsed[0];
+    const looksLikeHeader = !/^\d+$/.test((header[0] || '').trim());
+
+    let dataRows, rankIdx = -1, nameIdx = -1, posIdx = -1, teamIdx = -1;
+
+    if(looksLikeHeader){
+      dataRows = parsed.slice(1);
+      const lower = header.map(h => h.toLowerCase());
+      const findCol = (keywords) => {
+        for(const kw of keywords){
+          const idx = lower.findIndex(h => h.includes(kw));
+          if(idx > -1) return idx;
+        }
+        return -1;
+      };
+      rankIdx = findCol(['rank']);
+      nameIdx = findCol(['player name', 'name']);
+      posIdx  = findCol(['position', 'pos']);
+      teamIdx = findCol(['team']);
+    } else {
+      dataRows = parsed; // no header row — assume plain rank,name,position,team order
+    }
+
+    // anything not matched by header name falls back to a positional guess
+    if(rankIdx === -1) rankIdx = 0;
+    if(nameIdx === -1) nameIdx = 1;
+    if(posIdx  === -1) posIdx  = 2;
+    if(teamIdx === -1) teamIdx = 3;
+
+    document.getElementById('previewMeta').textContent =
+      `Loaded ${file.name} — ${dataRows.length} players parsed (matched rank/name/position/team columns automatically; any other columns are ignored)`;
+    const body = document.getElementById('previewBody');
+    body.innerHTML = dataRows.slice(0,25).map(row => `
+      <tr><td>${row[rankIdx] || ''}</td><td>${row[nameIdx] || ''}</td><td>${row[posIdx] || ''}</td><td>${row[teamIdx] || ''}</td></tr>
+    `).join('');
+    document.getElementById('previewWrap').style.display = 'block';
+  };
+  reader.readAsText(file);
+}
+
+/* ============================= INIT ============================= */
+renderPosFilters();
+renderQueueTeamSelect();
+renderByRound();
+renderTeamSelect();
+initAdminTab();
+refreshAfterDraftChange(); // builds the clock strip (incl. timer badge), renders board/table/queue/roster/undo box, starts the pick clock
+restoreLoginFromStorage();
+applyLoginState();
+if(!currentUser) openLoginModal();
+</script>
+</body>
+</html>
