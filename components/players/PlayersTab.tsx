@@ -6,23 +6,22 @@ import { PlayerTable } from "./PlayerTable";
 import { QueuePanel } from "./QueuePanel";
 
 export function PlayersTab() {
-  const { teams, currentUser } = useDraftData();
+  const { currentUser } = useDraftData();
   const [selectedQueueTeam, setSelectedQueueTeam] = useState<number | null>(null);
 
+  // This tab is only ever shown to team-type users (standalone Admin sessions
+  // only see the Admin tab), so the queue is always locked to your own team.
   useEffect(() => {
     if (currentUser?.type === "team") {
       setSelectedQueueTeam(currentUser.teamId);
-    } else if (selectedQueueTeam == null && teams.length > 0) {
-      setSelectedQueueTeam(teams[0].id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, teams]);
+  }, [currentUser]);
 
   return (
     <div className="panel-inner">
       <div className="pl-layout">
         <PlayerTable selectedQueueTeam={selectedQueueTeam} />
-        <QueuePanel selectedQueueTeam={selectedQueueTeam} onChangeTeam={setSelectedQueueTeam} />
+        <QueuePanel selectedQueueTeam={selectedQueueTeam} />
       </div>
     </div>
   );
