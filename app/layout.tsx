@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Anton, IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { DraftDataProvider } from "@/lib/useDraftData";
@@ -24,6 +24,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Field Goal Seekers 2 — Draft Board",
   description: "Live fantasy football draft board",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

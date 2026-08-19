@@ -16,8 +16,7 @@ export function PlayerTable({ selectedQueueTeam }: { selectedQueueTeam: number |
 
   const list = players
     .filter((p) => (activeFilter === "ALL" || p.pos === activeFilter) && (!hideDrafted || !draftedPlayerIds.has(p.id)))
-    .sort((a, b) => a.overall_rank - b.overall_rank)
-    .slice(0, 80);
+    .sort((a, b) => a.overall_rank - b.overall_rank);
 
   return (
     <div>

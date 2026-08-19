@@ -71,7 +71,7 @@ interface DraftDataValue {
   // queues
   addToQueue: (teamId: number, playerId: number) => Promise<void>;
   removeFromQueue: (teamId: number, playerId: number) => Promise<void>;
-  moveInQueue: (teamId: number, playerId: number, direction: "up" | "down") => Promise<void>;
+  reorderQueue: (teamId: number, orderedPlayerIds: number[]) => Promise<void>;
   setRoundPref: (teamId: number, round: number, pos: string) => Promise<void>;
 
   // players / CSV
@@ -494,15 +494,12 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     await supabase.from("team_queue").delete().eq("team_id", teamId).eq("player_id", playerId);
   }, []);
 
-  const moveInQueue = useCallback(async (teamId: number, playerId: number, direction: "up" | "down") => {
-    const list = teamQueueRowsRef.current.filter((q) => q.team_id === teamId).sort((a, b) => a.sort_order - b.sort_order);
-    const idx = list.findIndex((q) => q.player_id === playerId);
-    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
-    if (idx === -1 || swapIdx < 0 || swapIdx >= list.length) return;
-    const a = list[idx];
-    const b = list[swapIdx];
-    await supabase.from("team_queue").update({ sort_order: b.sort_order }).eq("id", a.id);
-    await supabase.from("team_queue").update({ sort_order: a.sort_order }).eq("id", b.id);
+  const reorderQueue = useCallback(async (teamId: number, orderedPlayerIds: number[]) => {
+    const list = teamQueueRowsRef.current.filter((q) => q.team_id === teamId);
+    for (let i = 0; i < orderedPlayerIds.length; i++) {
+      const row = list.find((q) => q.player_id === orderedPlayerIds[i]);
+      if (row) await supabase.from("team_queue").update({ sort_order: i }).eq("id", row.id);
+    }
   }, []);
 
   const setRoundPref = useCallback(async (teamId: number, round: number, pos: string) => {
@@ -590,7 +587,7 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     reorderTeams,
     addToQueue,
     removeFromQueue,
-    moveInQueue,
+    reorderQueue,
     setRoundPref,
     replacePlayerPool,
     uploadTeamMusic,

@@ -1752,3 +1752,144 @@ table.preview tbody td {
     font-size: 32px;
   }
 }
+
+/* ============================================================
+   Mobile / tablet responsiveness (portrait + landscape)
+   ============================================================ */
+
+/* Touch scrolling feels sluggish/jerky without this on iOS Safari */
+.board-scroll,
+.carousel {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tablet and below: tighten the outer chrome so more of the actual
+   draft board / player list is visible on a smaller screen. */
+@media (max-width: 900px) {
+  .topbar {
+    padding: 14px 16px;
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+  .brand h1 {
+    font-size: 18px;
+  }
+  .brand .yard-badge {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+  }
+  .clock-strip {
+    padding: 10px 16px;
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .tabs {
+    padding: 12px 12px 0 12px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  .tab-btn {
+    padding: 9px 14px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .tab-panel {
+    padding: 0 12px 40px 12px;
+  }
+  .panel-inner {
+    padding: 16px;
+  }
+  .admin-wrap {
+    gap: 16px;
+  }
+  .a-card {
+    padding: 18px 16px;
+  }
+  .queue-panel {
+    top: 0;
+  }
+}
+
+/* Phones (portrait most of the time, but this covers narrow landscape too) */
+@media (max-width: 560px) {
+  .brand .sub {
+    display: none; /* "2026 DRAFT" — drop it, the league name is enough on a phone */
+  }
+  .account-badge {
+    font-size: 11px;
+  }
+  .clock-strip {
+    font-size: 12px;
+  }
+  .pick-clock-badge {
+    font-size: 12px;
+    padding: 4px 9px;
+  }
+  .draft-type-options {
+    grid-template-columns: 1fr;
+  }
+  .custom-rounds-list {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+  .order-item,
+  .owner-row,
+  .music-row {
+    flex-wrap: wrap;
+  }
+  .apply-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .apply-bar > * {
+    width: 100%;
+  }
+  /* Bigger, easier-to-hit tap targets on touch screens */
+  .btn,
+  .tab-btn,
+  .filter-chip,
+  .qremove,
+  .close-overlay {
+    min-height: 40px;
+  }
+  input[type="text"],
+  input[type="number"],
+  select {
+    min-height: 40px;
+  }
+}
+
+/* Short viewports — phones held sideways (landscape). Vertical space is
+   the scarce resource here, not width, so shrink the fixed chrome instead
+   of the content. */
+@media (max-height: 480px) and (orientation: landscape) {
+  .topbar {
+    padding: 8px 16px;
+    position: static; /* stop eating a whole sticky row when there's barely any height to begin with */
+  }
+  .clock-strip {
+    padding: 6px 16px;
+    font-size: 11px;
+  }
+  .tabs {
+    padding: 8px 12px 0 12px;
+  }
+  .tab-btn {
+    padding: 7px 12px;
+  }
+  .tab-panel {
+    padding: 0 12px 24px 12px;
+  }
+  .round-overlay {
+    padding: 10px 0;
+  }
+  .round-head {
+    margin-bottom: 10px;
+  }
+  .rtile {
+    min-height: 150px;
+  }
+  .rtile.current {
+    transform: scale(1.1);
+  }
+}
