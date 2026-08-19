@@ -59,7 +59,7 @@ export function ClaimTeamGrid() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
         {orderedTeams.map((team) => {
           const isMine = team.id === myTeamId;
-          const disabled = (team.claimed && !isMine) || claiming === team.id;
+          const disabled = claiming === team.id;
           return (
             <button
               key={team.id}
@@ -72,13 +72,12 @@ export function ClaimTeamGrid() {
                 fontSize: 15,
                 fontWeight: 600,
                 borderColor: isMine ? "var(--amber)" : "var(--border)",
-                opacity: team.claimed && !isMine ? 0.4 : 1,
-                cursor: disabled && !isMine ? "not-allowed" : "pointer",
+                cursor: disabled ? "wait" : "pointer",
               }}
             >
               {team.name}
               <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--chalk-dim)", marginTop: 4, fontWeight: 400 }}>
-                {isMine ? "This is you" : team.claimed ? "Claimed" : claiming === team.id ? "Claiming…" : "Tap to claim"}
+                {isMine ? "This is you" : claiming === team.id ? "Entering…" : team.claimed ? "Claimed — tap to log in as them" : "Tap to claim"}
                 {team.is_admin && !isMine && " · Admin team"}
               </div>
             </button>

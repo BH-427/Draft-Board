@@ -206,21 +206,17 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => setCurrentUser(null), [setCurrentUser]);
 
-  const claimTeam = useCallback(
+    const claimTeam = useCallback(
     async (teamId: number) => {
-      // .eq("claimed", false) makes this safe if two people tap the same team
-      // at nearly the same instant — only the first write succeeds.
-      const { data, error } = await supabase
+      // No exclusivity here on purpose — this is a trusted, private league.
+      // "claimed" is just an informational status, not a lock. Anyone can
+      // tap into any team at any time (e.g. logging back into their own
+      // team after logging out), regardless of its current claimed state.
+      await supabase
         .from("teams")
         .update({ claimed: true, claimed_at: new Date().toISOString() })
-        .eq("id", teamId)
-        .eq("claimed", false)
-        .select();
+        .eq("id", teamId);
 
-      if (error) return { ok: false, error: error.message };
-      if (!data || data.length === 0) {
-        return { ok: false, error: "Someone just claimed that team — pick another." };
-      }
       setCurrentUser({ type: "team", teamId });
       return { ok: true };
     },
