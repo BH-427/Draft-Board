@@ -53,13 +53,14 @@ export function PlayerTable({ selectedQueueTeam }: { selectedQueueTeam: number |
           </tr>
         </thead>
         <tbody>
-          {list.map((p) => {
+          {list.map((p, idx) => {
             const isDrafted = draftedPlayerIds.has(p.id);
             const inQueue = queuedIds.has(p.id);
             const canDraft = !isDrafted && !!onClockPick && canActFor(onClockPick.team_id);
+            const displayRank = activeFilter === "ALL" ? p.overall_rank : idx + 1;
             return (
               <tr key={p.id}>
-                <td className="rank-cell">{p.overall_rank}</td>
+                <td className="rank-cell">{displayRank}</td>
                 <td>{p.name}</td>
                 <td>
                   <span className={`pos-pill pos-${p.pos}`}>{p.pos}</span>
