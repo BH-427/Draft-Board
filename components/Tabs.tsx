@@ -13,12 +13,14 @@ export function Tabs({
   active,
   onChange,
   showAdmin,
+  adminOnly,
 }: {
   active: TabKey;
   onChange: (tab: TabKey) => void;
   showAdmin: boolean;
+  adminOnly?: boolean;
 }) {
-  const tabs: TabKey[] = showAdmin ? ["board", "players", "myteam", "admin"] : ["board", "players", "myteam"];
+  const tabs: TabKey[] = adminOnly ? ["admin"] : showAdmin ? ["board", "players", "myteam", "admin"] : ["board", "players", "myteam"];
   return (
     <div className="tabs">
       {tabs.map((tab) => (

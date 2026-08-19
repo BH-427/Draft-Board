@@ -29,8 +29,10 @@ export function TeamsCard() {
     <div className="a-card">
       <h2>Draft Order</h2>
       <p className="a-desc">
-        Set the pick order for round 1, and edit team names. Use the arrows to reorder — hit &quot;Apply Draft Order
-        &amp; Type&quot; below once you&apos;re happy with it.
+        Set the pick order for round 1, edit team names, and check &quot;Admin&quot; for any team whose owner should
+        be able to undo picks, pause the clock, and reach this Admin tab during the draft — you can check as many
+        as you want. There&apos;s also a standalone &quot;Admin&quot; option on the landing screen that doesn&apos;t
+        need a team at all.
       </p>
       <ul className="order-list">
         {ordered.map((team, i) => (
@@ -60,6 +62,25 @@ export function TeamsCard() {
             >
               {team.claimed ? "Claimed" : "Unclaimed"}
             </span>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                fontFamily: "var(--font-mono)",
+                fontSize: 10.5,
+                color: team.is_admin ? "var(--amber)" : "var(--chalk-dim)",
+                whiteSpace: "nowrap",
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={team.is_admin}
+                onChange={(e) => updateTeam(team.id, { is_admin: e.target.checked })}
+              />
+              Admin
+            </label>
             <button onClick={() => move(i, -1)} disabled={i === 0} title="Move up">
               ▲
             </button>

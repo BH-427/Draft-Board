@@ -34,6 +34,7 @@ export interface Team {
   sort_order: number;
   claimed: boolean;
   claimed_at: string | null;
+  is_admin: boolean;
 }
 
 export interface Player {

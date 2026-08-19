@@ -1,17 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDraftData } from "@/lib/useDraftData";
 import { useToast } from "@/components/Toast";
 
 export function TeamOwnersCard() {
-  const { teams, leagueSettings, updateTeam, updateLeagueSettings } = useDraftData();
-  const [adminEmail, setAdminEmail] = useState("");
+  const { teams, updateTeam } = useDraftData();
   const { showToast, ToastEl } = useToast();
-
-  useEffect(() => {
-    if (leagueSettings) setAdminEmail(leagueSettings.admin_email);
-  }, [leagueSettings]);
 
   const ordered = [...teams].sort((a, b) => a.sort_order - b.sort_order);
 
@@ -25,24 +20,10 @@ export function TeamOwnersCard() {
       </h2>
       <p className="a-desc">
         Assign each team an owner email if you want it on file for later — but it&apos;s{" "}
-        <b>no longer used for login</b>. Teams just tap their name on the landing screen to claim it, no email
-        needed. &quot;Send Invite&quot; and &quot;Email Results&quot; below are placeholders for when the real
-        backend (Resend) is wired up.
-      </p>
-
-      <label className="field-label">Draft Admin Email</label>
-      <div className="admin-email-row">
-        <input
-          type="text"
-          value={adminEmail}
-          onChange={(e) => setAdminEmail(e.target.value)}
-          onBlur={() => updateLeagueSettings({ admin_email: adminEmail.trim() })}
-          placeholder="commissioner@email.com"
-        />
-      </div>
-      <p className="a-desc" style={{ margin: "8px 0 20px 0" }}>
-        Whoever logs in with this email gets full admin access — Undo, pause the clock, and this Admin tab. A
-        commissioner who also owns a team should use a different email for their team&apos;s owner slot below.
+        <b>not used for login</b>. Teams just tap their name on the landing screen to claim it, no email needed.
+        (Admin access is set separately, via the checkboxes in the Draft Order card, or the standalone
+        &quot;Admin&quot; option on the landing screen.) &quot;Send Invite&quot; and &quot;Email Results&quot;
+        below are placeholders for when the real backend (Resend) is wired up.
       </p>
 
       <div className="owner-list">

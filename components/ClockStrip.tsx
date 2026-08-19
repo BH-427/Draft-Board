@@ -7,7 +7,7 @@ const RUNOFF_SECONDS = 5;
 const LOW_THRESHOLD = 10;
 
 export function ClockStrip() {
-  const { leagueSettings, teams, onClockPick, draftState, isAdmin, pauseClock, resumeClock, autoDraftOnClock } =
+  const { leagueSettings, teams, draftPicks, onClockPick, draftState, isAdmin, pauseClock, resumeClock, autoDraftOnClock } =
     useDraftData();
   const [now, setNow] = useState(() => Date.now());
   const firedForRef = useRef<number | null>(null);
@@ -48,10 +48,13 @@ export function ClockStrip() {
   }, [inRunoff, remaining, onClockPick?.overall, clockEnabled, draftState?.clock_paused]);
 
   if (!onClockPick) {
+    const neverStarted = draftPicks.length === 0;
     return (
       <div className="clock-strip">
         <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--amber)" }}>
-          Draft complete — all picks are in.
+          {neverStarted
+            ? "Draft hasn't started yet — go to Admin \u2192 Draft Type and hit \u201cApply Draft Order & Type.\u201d"
+            : "Draft complete — all picks are in."}
         </span>
       </div>
     );

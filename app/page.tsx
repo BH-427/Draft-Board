@@ -16,10 +16,12 @@ export default function Home() {
   const { loading, currentUser, isAdmin } = useDraftData();
   const [activeTab, setActiveTab] = useState<TabKey>("board");
   const showAdmin = !!currentUser && isAdmin();
+  const adminOnly = currentUser?.type === "admin"; // standalone Admin login — not a drafting team
 
   useEffect(() => {
-    if (activeTab === "admin" && !showAdmin) setActiveTab("board");
-  }, [activeTab, showAdmin]);
+    if (adminOnly) setActiveTab("admin");
+    else if (activeTab === "admin" && !showAdmin) setActiveTab("board");
+  }, [activeTab, showAdmin, adminOnly]);
 
   if (loading) {
     return (
@@ -37,16 +39,21 @@ export default function Home() {
         active={activeTab}
         onChange={setActiveTab}
         showAdmin={showAdmin}
+        adminOnly={adminOnly}
       />
-      <div className={`tab-panel ${activeTab === "board" ? "active" : ""}`}>
-        <BoardTab />
-      </div>
-      <div className={`tab-panel ${activeTab === "players" ? "active" : ""}`}>
-        <PlayersTab />
-      </div>
-      <div className={`tab-panel ${activeTab === "myteam" ? "active" : ""}`}>
-        <MyTeamTab />
-      </div>
+      {!adminOnly && (
+        <>
+          <div className={`tab-panel ${activeTab === "board" ? "active" : ""}`}>
+            <BoardTab />
+          </div>
+          <div className={`tab-panel ${activeTab === "players" ? "active" : ""}`}>
+            <PlayersTab />
+          </div>
+          <div className={`tab-panel ${activeTab === "myteam" ? "active" : ""}`}>
+            <MyTeamTab />
+          </div>
+        </>
+      )}
       {showAdmin && (
         <div className={`tab-panel ${activeTab === "admin" ? "active" : ""}`}>
           <AdminTab />

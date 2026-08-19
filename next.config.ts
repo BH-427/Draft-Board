@@ -1,14 +1,10 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  // Pre-existing strict react-hooks lint rules (from the newer eslint-hooks
-  // rule set) flag some ref-caching patterns in lib/useDraftData.tsx that
-  // are functionally fine but stylistically frowned on. Not blocking the
-  // Saturday deploy over lint style — type-checking (tsc --noEmit) still
-  // passes clean and is the real correctness check.
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-};
+// Note: as of Next.js 16, ESLint is no longer integrated into `next build`
+// (it's a standalone step via eslint.config.mjs / `next lint` now), so
+// lint errors — including some pre-existing ones in lib/useDraftData.tsx —
+// can't block the production build the way they could in older Next
+// versions. Nothing to configure here for that.
+const nextConfig: NextConfig = {};
 
 export default nextConfig;

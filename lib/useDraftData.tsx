@@ -38,7 +38,6 @@ interface DraftDataValue {
   draftedPlayerIds: Set<number>;
 
   // auth
-  findLoginMatch: (email: string) => { type: "admin" } | { type: "team"; teamId: number; teamName: string } | null;
   claimTeam: (teamId: number) => Promise<{ ok: boolean; error?: string }>;
   setCurrentUser: (user: CurrentUser) => void;
   logout: () => void;
@@ -228,25 +227,13 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     [setCurrentUser]
   );
 
-  const findLoginMatch = useCallback(
-    (email: string) => {
-      const clean = email.trim().toLowerCase();
-      if (!clean) return null;
-      const settings = leagueSettingsRef.current;
-      if (settings?.admin_email && settings.admin_email.trim().toLowerCase() === clean) {
-        return { type: "admin" as const };
-      }
-      const team = teamsRef.current.find((t) => (t.owner_email || "").trim().toLowerCase() === clean);
-      if (team) return { type: "team" as const, teamId: team.id, teamName: team.name };
-      return null;
-    },
-    []
-  );
-
   const isAdmin = useCallback(() => {
-    const settings = leagueSettingsRef.current;
-    if (!settings?.admin_email || !settings.admin_email.trim()) return true; // unconfigured — don't lock out setup
-    return currentUser?.type === "admin";
+    if (currentUser?.type === "admin") return true;
+    if (currentUser?.type === "team") {
+      const team = teamsRef.current.find((t) => t.id === currentUser.teamId);
+      return !!team?.is_admin;
+    }
+    return false;
   }, [currentUser]);
 
   const canActFor = useCallback(
@@ -523,7 +510,6 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     currentUser,
     onClockPick,
     draftedPlayerIds,
-    findLoginMatch,
     claimTeam,
     setCurrentUser,
     logout,

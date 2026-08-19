@@ -4,12 +4,13 @@ import { useState } from "react";
 import { useDraftData } from "@/lib/useDraftData";
 import { useToast } from "./Toast";
 
-export function ClaimTeamGrid({ onAdminLogin }: { onAdminLogin: () => void }) {
+export function ClaimTeamGrid() {
   const { teams, leagueSettings, claimTeam, currentUser, setCurrentUser } = useDraftData();
   const [claiming, setClaiming] = useState<number | null>(null);
   const { showToast, ToastEl } = useToast();
 
   const myTeamId = currentUser?.type === "team" ? currentUser.teamId : null;
+  const isAdminSession = currentUser?.type === "admin";
 
   async function handleClaim(teamId: number, isMine: boolean) {
     if (isMine) return; // already yours, nothing to do — TopBar shows you're logged in
@@ -32,7 +33,7 @@ export function ClaimTeamGrid({ onAdminLogin }: { onAdminLogin: () => void }) {
         </div>
       </div>
 
-      {myTeamId != null && (
+      {(myTeamId != null || isAdminSession) && (
         <div
           className="a-card"
           style={{
@@ -46,7 +47,11 @@ export function ClaimTeamGrid({ onAdminLogin }: { onAdminLogin: () => void }) {
           }}
         >
           <div style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>
-            You're playing as <b style={{ color: "var(--amber)" }}>{teams.find((t) => t.id === myTeamId)?.name}</b>
+            {isAdminSession ? (
+              <>You're in as <b style={{ color: "var(--amber)" }}>Draft Admin</b></>
+            ) : (
+              <>You're playing as <b style={{ color: "var(--amber)" }}>{teams.find((t) => t.id === myTeamId)?.name}</b></>
+            )}
           </div>
         </div>
       )}
@@ -74,23 +79,35 @@ export function ClaimTeamGrid({ onAdminLogin }: { onAdminLogin: () => void }) {
               {team.name}
               <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--chalk-dim)", marginTop: 4, fontWeight: 400 }}>
                 {isMine ? "This is you" : team.claimed ? "Claimed" : claiming === team.id ? "Claiming…" : "Tap to claim"}
+                {team.is_admin && !isMine && " · Admin team"}
               </div>
             </button>
           );
         })}
-      </div>
 
-      <div style={{ textAlign: "center", marginTop: 40 }}>
         <button
-          onClick={onAdminLogin}
-          style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--chalk-dim)", background: "none", border: "none", cursor: "pointer" }}
+          onClick={() => setCurrentUser({ type: "admin" })}
+          disabled={isAdminSession}
+          className="btn"
+          style={{
+            padding: "18px 16px",
+            textAlign: "left",
+            fontSize: 15,
+            fontWeight: 600,
+            borderColor: isAdminSession ? "var(--amber)" : "var(--pos-dst)",
+            opacity: isAdminSession ? 0.4 : 1,
+            cursor: isAdminSession ? "not-allowed" : "pointer",
+          }}
         >
-          Draft Admin →
+          ⚙ Admin
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--chalk-dim)", marginTop: 4, fontWeight: 400 }}>
+            {isAdminSession ? "This is you" : "Set up & run the draft"}
+          </div>
         </button>
       </div>
 
-      {myTeamId != null && (
-        <div style={{ textAlign: "center", marginTop: 14 }}>
+      {(myTeamId != null || isAdminSession) && (
+        <div style={{ textAlign: "center", marginTop: 20 }}>
           <button
             onClick={() => setCurrentUser(null)}
             style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--chalk-dim)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}

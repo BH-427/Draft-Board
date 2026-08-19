@@ -1,13 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { useDraftData } from "@/lib/useDraftData";
-import { LoginModal } from "./LoginModal";
 import { ClaimTeamGrid } from "./ClaimTeamGrid";
 
 export function TopBar() {
   const { leagueSettings, teams, currentUser, logout } = useDraftData();
-  const [adminLoginOpen, setAdminLoginOpen] = useState(false);
 
   const forced = !currentUser;
   const teamName = currentUser?.type === "team" ? teams.find((t) => t.id === currentUser.teamId)?.name : null;
@@ -23,7 +20,7 @@ export function TopBar() {
           </div>
         </div>
         <div className="account-area">
-          {currentUser ? (
+          {currentUser && (
             <>
               <div className="account-badge">
                 {currentUser.type === "admin" ? (
@@ -36,21 +33,15 @@ export function TopBar() {
                 Log Out
               </button>
             </>
-          ) : (
-            <button className="login-open-btn" onClick={() => setAdminLoginOpen(true)}>
-              Draft Admin
-            </button>
           )}
         </div>
       </div>
 
       {forced && (
         <div className="login-modal-backdrop" style={{ overflowY: "auto" }}>
-          <ClaimTeamGrid onAdminLogin={() => setAdminLoginOpen(true)} />
+          <ClaimTeamGrid />
         </div>
       )}
-
-      {adminLoginOpen && <LoginModal forced={false} onClose={() => setAdminLoginOpen(false)} />}
     </>
   );
 }
