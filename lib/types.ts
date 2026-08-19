@@ -32,6 +32,8 @@ export interface Team {
   name: string;
   owner_email: string | null;
   sort_order: number;
+  claimed: boolean;
+  claimed_at: string | null;
 }
 
 export interface Player {

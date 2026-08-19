@@ -39,6 +39,7 @@ interface DraftDataValue {
 
   // auth
   findLoginMatch: (email: string) => { type: "admin" } | { type: "team"; teamId: number; teamName: string } | null;
+  claimTeam: (teamId: number) => Promise<{ ok: boolean; error?: string }>;
   setCurrentUser: (user: CurrentUser) => void;
   logout: () => void;
   isAdmin: () => boolean;
@@ -205,6 +206,27 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(() => setCurrentUser(null), [setCurrentUser]);
+
+  const claimTeam = useCallback(
+    async (teamId: number) => {
+      // .eq("claimed", false) makes this safe if two people tap the same team
+      // at nearly the same instant — only the first write succeeds.
+      const { data, error } = await supabase
+        .from("teams")
+        .update({ claimed: true, claimed_at: new Date().toISOString() })
+        .eq("id", teamId)
+        .eq("claimed", false)
+        .select();
+
+      if (error) return { ok: false, error: error.message };
+      if (!data || data.length === 0) {
+        return { ok: false, error: "Someone just claimed that team — pick another." };
+      }
+      setCurrentUser({ type: "team", teamId });
+      return { ok: true };
+    },
+    [setCurrentUser]
+  );
 
   const findLoginMatch = useCallback(
     (email: string) => {
@@ -502,6 +524,7 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     onClockPick,
     draftedPlayerIds,
     findLoginMatch,
+    claimTeam,
     setCurrentUser,
     logout,
     isAdmin,

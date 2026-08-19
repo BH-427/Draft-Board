@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { useDraftData } from "@/lib/useDraftData";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/Toast";
 
 export function TeamsCard() {
   const { teams, updateTeam, addTeam, removeTeam, reorderTeams } = useDraftData();
   const [newTeamName, setNewTeamName] = useState("");
+  const { showToast, ToastEl } = useToast();
   const ordered = [...teams].sort((a, b) => a.sort_order - b.sort_order);
 
   function move(index: number, dir: -1 | 1) {
@@ -14,6 +17,12 @@ export function TeamsCard() {
     const ids = ordered.map((t) => t.id);
     [ids[index], ids[target]] = [ids[target], ids[index]];
     reorderTeams(ids);
+  }
+
+  async function resetAllClaims() {
+    if (!window.confirm("Un-claim all teams? Anyone who already tapped their team will need to tap it again.")) return;
+    const { error } = await supabase.from("teams").update({ claimed: false, claimed_at: null }).neq("id", 0);
+    showToast(error ? error.message : "All claims reset.");
   }
 
   return (
@@ -41,6 +50,16 @@ export function TeamsCard() {
               }}
               onBlur={(e) => e.target.value.trim() && e.target.value !== team.name && updateTeam(team.id, { name: e.target.value.trim() })}
             />
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 10.5,
+                color: team.claimed ? "var(--turf)" : "var(--chalk-dim)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {team.claimed ? "Claimed" : "Unclaimed"}
+            </span>
             <button onClick={() => move(i, -1)} disabled={i === 0} title="Move up">
               ▲
             </button>
@@ -74,7 +93,11 @@ export function TeamsCard() {
         >
           + Add Team
         </button>
+        <button className="btn" onClick={resetAllClaims}>
+          Reset All Claims
+        </button>
       </div>
+      {ToastEl}
     </div>
   );
 }

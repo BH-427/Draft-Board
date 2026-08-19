@@ -24,9 +24,10 @@ export function TeamOwnersCard() {
         </span>
       </h2>
       <p className="a-desc">
-        Assign each team an owner email. &quot;Send Invite&quot; and &quot;Email Results&quot; don&apos;t actually
-        send anything yet — they&apos;re here so the flow and layout are ready for when the real backend is wired
-        up. Login matching against these emails <i>does</i> work, on any device.
+        Assign each team an owner email if you want it on file for later — but it&apos;s{" "}
+        <b>no longer used for login</b>. Teams just tap their name on the landing screen to claim it, no email
+        needed. &quot;Send Invite&quot; and &quot;Email Results&quot; below are placeholders for when the real
+        backend (Resend) is wired up.
       </p>
 
       <label className="field-label">Draft Admin Email</label>
