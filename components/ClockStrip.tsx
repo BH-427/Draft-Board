@@ -50,9 +50,13 @@ export function ClockStrip() {
   if (!onClockPick) {
     let message: string;
     if (draftPicks.length === 0) {
-      message = "Draft hasn't been set up yet — go to Admin \u2192 Draft Type and hit \u201cApply Draft Order & Type.\u201d";
+      message = isAdmin()
+        ? "Draft hasn't been set up yet — go to Admin \u2192 Draft Type and hit \u201cApply Draft Order & Type.\u201d"
+        : "Draft hasn't been set up yet — check back once the admin has things configured.";
     } else if (!leagueSettings?.draft_started) {
-      message = "Draft order is set \u2014 owners can build their queues now. Go to Admin \u2192 Draft Controls and hit \u201cStart Draft\u201d when everyone's ready.";
+      message = isAdmin()
+        ? "Draft order is set \u2014 owners can build their queues now. Go to Admin \u2192 Draft Controls and hit \u201cStart Draft\u201d when everyone's ready."
+        : "Draft order is set \u2014 build your queue now. The draft will start once the admin hits \u201cStart Draft.\u201d";
     } else {
       message = "Draft complete — all picks are in.";
     }

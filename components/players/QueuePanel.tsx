@@ -26,18 +26,26 @@ export function QueuePanel({
   return (
     <div className="queue-panel">
       <label className="field-label">Queueing as</label>
-      <select
-        className="queue-team-select"
-        value={selectedQueueTeam ?? ""}
-        disabled={locked}
-        onChange={(e) => onChangeTeam(parseInt(e.target.value, 10))}
-      >
-        {teams.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.name}
-          </option>
-        ))}
-      </select>
+      {locked ? (
+        <div
+          className="queue-team-select"
+          style={{ display: "flex", alignItems: "center", cursor: "default", color: "var(--chalk)" }}
+        >
+          {teams.find((t) => t.id === selectedQueueTeam)?.name ?? "\u2014"}
+        </div>
+      ) : (
+        <select
+          className="queue-team-select"
+          value={selectedQueueTeam ?? ""}
+          onChange={(e) => onChangeTeam(parseInt(e.target.value, 10))}
+        >
+          {teams.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+      )}
       <h3>Queue</h3>
       <div className="queue-toggle">
         <button className={view === "total" ? "active" : ""} onClick={() => setView("total")}>

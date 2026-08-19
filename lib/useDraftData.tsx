@@ -46,6 +46,7 @@ interface DraftDataValue {
 
   // draft actions
   draftPlayer: (playerId: number, isAuto?: boolean) => Promise<void>;
+  draftPlayerForTeam: (teamId: number, playerId: number) => Promise<{ ok: boolean; error?: string }>;
   undoLastPick: () => Promise<void>;
   autoDraftOnClock: () => Promise<void>;
   applyDraftOrderAndType: (opts: {
@@ -280,6 +281,45 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
       await advanceClockAfterPick(pick.overall);
     },
     [advanceClockAfterPick]
+  );
+
+  // Admin-only: draft a player for any team's next open pick, whether or not
+  // that team is currently on the clock (e.g. an owner is AFK). Only resets
+  // the running clock if the pick filled actually was the current on-the-clock
+  // pick — filling some other team's future pick out of turn doesn't disturb
+  // whoever's turn it currently is.
+  const draftPlayerForTeam = useCallback(
+    async (teamId: number, playerId: number) => {
+      if (!isAdmin()) return { ok: false, error: "Admin only." };
+      if (!leagueSettingsRef.current?.draft_started) return { ok: false, error: "Start the draft first." };
+
+      const alreadyDrafted = draftPicksRef.current.some((p) => p.player_id === playerId);
+      if (alreadyDrafted) return { ok: false, error: "That player is already drafted." };
+
+      const targetPick = draftPicksRef.current
+        .filter((p) => p.team_id === teamId && p.player_id == null)
+        .sort((a, b) => a.overall - b.overall)[0];
+      if (!targetPick) return { ok: false, error: "That team has no open picks left." };
+
+      const currentOnClock = findOnClockPick(draftPicksRef.current);
+
+      const { error, data } = await supabase
+        .from("draft_picks")
+        .update({ player_id: playerId, is_auto: false, made_at: new Date().toISOString() })
+        .eq("id", targetPick.id)
+        .is("player_id", null)
+        .select();
+      if (error) return { ok: false, error: error.message };
+      if (!data || data.length === 0) return { ok: false, error: "That pick was just made — try again." };
+
+      await supabase.from("team_queue").delete().eq("player_id", playerId);
+
+      if (currentOnClock && currentOnClock.overall === targetPick.overall) {
+        await advanceClockAfterPick(targetPick.overall);
+      }
+      return { ok: true };
+    },
+    [isAdmin, advanceClockAfterPick]
   );
 
   const undoLastPick = useCallback(async () => {
@@ -536,6 +576,7 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     isAdmin,
     canActFor,
     draftPlayer,
+    draftPlayerForTeam,
     undoLastPick,
     autoDraftOnClock,
     applyDraftOrderAndType,
