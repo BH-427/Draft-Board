@@ -8,15 +8,23 @@ import { useToast } from "@/components/Toast";
 export function TeamsCard() {
   const { teams, updateTeam, addTeam, removeTeam, reorderTeams } = useDraftData();
   const [newTeamName, setNewTeamName] = useState("");
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
   const { showToast, ToastEl } = useToast();
   const ordered = [...teams].sort((a, b) => a.sort_order - b.sort_order);
 
-  function move(index: number, dir: -1 | 1) {
-    const target = index + dir;
-    if (target < 0 || target >= ordered.length) return;
+  function handleDrop(targetIndex: number) {
+    if (dragIndex == null || dragIndex === targetIndex) {
+      setDragIndex(null);
+      setOverIndex(null);
+      return;
+    }
     const ids = ordered.map((t) => t.id);
-    [ids[index], ids[target]] = [ids[target], ids[index]];
+    const [moved] = ids.splice(dragIndex, 1);
+    ids.splice(targetIndex, 0, moved);
     reorderTeams(ids);
+    setDragIndex(null);
+    setOverIndex(null);
   }
 
   async function resetAllClaims() {
@@ -29,14 +37,36 @@ export function TeamsCard() {
     <div className="a-card">
       <h2>Draft Order</h2>
       <p className="a-desc">
-        Set the pick order for round 1, edit team names, and check &quot;Admin&quot; for any team whose owner should
-        be able to undo picks, pause the clock, and reach this Admin tab during the draft — you can check as many
-        as you want. There&apos;s also a standalone &quot;Admin&quot; option on the landing screen that doesn&apos;t
-        need a team at all.
+        Drag teams into the pick order for round 1, edit team names, and check &quot;Admin&quot; for any team whose
+        owner should be able to undo picks, pause the clock, and reach this Admin tab during the draft — you can
+        check as many as you want. There&apos;s also a standalone &quot;Admin&quot; option on the landing screen
+        that doesn&apos;t need a team at all.
       </p>
       <ul className="order-list">
         {ordered.map((team, i) => (
-          <li className="order-item" key={team.id}>
+          <li
+            className="order-item"
+            key={team.id}
+            draggable
+            onDragStart={() => setDragIndex(i)}
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (overIndex !== i) setOverIndex(i);
+            }}
+            onDrop={() => handleDrop(i)}
+            onDragEnd={() => {
+              setDragIndex(null);
+              setOverIndex(null);
+            }}
+            style={{
+              cursor: "grab",
+              opacity: dragIndex === i ? 0.4 : 1,
+              borderTop: overIndex === i && dragIndex !== null && dragIndex !== i ? "2px solid var(--amber)" : "2px solid transparent",
+            }}
+          >
+            <span title="Drag to reorder" style={{ cursor: "grab", color: "var(--chalk-dim)", fontSize: 16, lineHeight: 1 }}>
+              ⠿
+            </span>
             <span className="num">{i + 1}</span>
             <input
               type="text"
@@ -81,12 +111,6 @@ export function TeamsCard() {
               />
               Admin
             </label>
-            <button onClick={() => move(i, -1)} disabled={i === 0} title="Move up">
-              ▲
-            </button>
-            <button onClick={() => move(i, 1)} disabled={i === ordered.length - 1} title="Move down">
-              ▼
-            </button>
             <button
               onClick={() => window.confirm(`Remove ${team.name}? This also removes any picks already made for them.`) && removeTeam(team.id)}
               title="Remove team"

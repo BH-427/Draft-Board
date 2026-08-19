@@ -23,7 +23,7 @@ export function DraftTypeCard() {
   async function apply() {
     const orderedTeamIds = [...teams].sort((a, b) => a.sort_order - b.sort_order).map((t) => t.id);
     await applyDraftOrderAndType({ orderedTeamIds, draftType, customDirections, totalRounds });
-    showToast("Draft order & type applied — the mock board has been rebuilt.");
+    showToast("Draft order & type applied — hit \"Start Draft\" in Draft Controls when you're ready to go live.");
   }
 
   return (
@@ -85,7 +85,10 @@ export function DraftTypeCard() {
         <button className="btn primary" onClick={apply}>
           Apply Draft Order &amp; Type
         </button>
-        <span className="apply-note">Rebuilds the mock board with the new order — resets all picks made so far.</span>
+        <span className="apply-note">
+          Builds the pick order so owners can set up their queues — doesn&apos;t start the clock. Resets any picks
+          already made. Hit &quot;Start Draft&quot; in Draft Controls when you&apos;re ready to go live.
+        </span>
       </div>
       {ToastEl}
     </div>

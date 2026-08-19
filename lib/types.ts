@@ -25,6 +25,7 @@ export interface LeagueSettings {
   music_muted: boolean;
   announcer_enabled: boolean;
   admin_email: string;
+  draft_started: boolean;
 }
 
 export interface Team {

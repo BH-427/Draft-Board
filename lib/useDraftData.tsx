@@ -54,6 +54,7 @@ interface DraftDataValue {
     customDirections: Record<string, "forward" | "reverse">;
     totalRounds: number;
   }) => Promise<void>;
+  startDraft: () => Promise<void>;
 
   // clock
   pauseClock: () => Promise<void>;
@@ -206,7 +207,7 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => setCurrentUser(null), [setCurrentUser]);
 
-    const claimTeam = useCallback(
+  const claimTeam = useCallback(
     async (teamId: number) => {
       // No exclusivity here on purpose — this is a trusted, private league.
       // "claimed" is just an informational status, not a lock. Anyone can
@@ -240,7 +241,10 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     [currentUser, isAdmin]
   );
 
-  const onClockPick = useMemo(() => findOnClockPick(draftPicks), [draftPicks]);
+  const onClockPick = useMemo(
+    () => (leagueSettings?.draft_started ? findOnClockPick(draftPicks) : null),
+    [draftPicks, leagueSettings?.draft_started]
+  );
   const draftedPlayerIds = useMemo(
     () => new Set(draftPicks.filter((p) => p.player_id != null).map((p) => p.player_id as number)),
     [draftPicks]
@@ -348,16 +352,19 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
         await supabase.from("draft_picks").insert(rows.slice(i, i + CHUNK));
       }
 
+      // draft_started resets to false here on purpose — (re)configuring the
+      // order/type/rounds always requires an explicit "Start Draft" afterward,
+      // even if the draft was already live before this was called.
       await supabase
         .from("league_settings")
-        .update({ draft_type: draftType, custom_directions: customDirections, total_rounds: totalRounds })
+        .update({ draft_type: draftType, custom_directions: customDirections, total_rounds: totalRounds, draft_started: false })
         .eq("id", 1);
 
       await supabase
         .from("draft_state")
         .update({
-          on_clock_overall: rows[0]?.overall ?? null,
-          clock_started_at: rows.length ? new Date().toISOString() : null,
+          on_clock_overall: null,
+          clock_started_at: null,
           clock_paused: false,
           paused_remaining_seconds: null,
         })
@@ -365,6 +372,23 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     },
     []
   );
+
+  const startDraft = useCallback(async () => {
+    if (!isAdmin()) return;
+    const firstPick = [...draftPicksRef.current].sort((a, b) => a.overall - b.overall)[0];
+    if (!firstPick) return; // nothing generated yet — Apply Draft Order & Type first
+
+    await supabase.from("league_settings").update({ draft_started: true }).eq("id", 1);
+    await supabase
+      .from("draft_state")
+      .update({
+        on_clock_overall: firstPick.overall,
+        clock_started_at: new Date().toISOString(),
+        clock_paused: false,
+        paused_remaining_seconds: null,
+      })
+      .eq("id", 1);
+  }, [isAdmin]);
 
   const pauseClock = useCallback(async () => {
     if (!isAdmin()) return;
@@ -515,6 +539,7 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     undoLastPick,
     autoDraftOnClock,
     applyDraftOrderAndType,
+    startDraft,
     pauseClock,
     resumeClock,
     updateLeagueSettings,
