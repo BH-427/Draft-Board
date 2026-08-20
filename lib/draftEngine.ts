@@ -152,3 +152,37 @@ export function starterCountFor(rosterCounts: RosterCounts): number {
 export function teamOrderNames(teams: Team[]): number[] {
   return [...teams].sort((a, b) => a.sort_order - b.sort_order).map((t) => t.id);
 }
+
+export interface TeamPositionGroup {
+  pos: string;
+  picks: DraftPick[];
+}
+
+const RESULTS_POS_ORDER = ["QB", "RB", "WR", "TE", "K", "DST"];
+
+/**
+ * Groups a team's completed picks by the player's literal position (QB/RB/WR/TE/K/DST),
+ * in that fixed order, each group sorted by draft order. Used for the end-of-draft
+ * results view — unlike fillRosterSlots, this ignores starter/bench/FLEX distinctions.
+ */
+export function groupTeamPicksByPosition(
+  teamPicks: DraftPick[],
+  playersById: Map<number, Player>
+): TeamPositionGroup[] {
+  const completed = [...teamPicks].filter((p) => p.player_id != null).sort((a, b) => a.overall - b.overall);
+  const groups = new Map<string, DraftPick[]>();
+  for (const pick of completed) {
+    const pos = playersById.get(pick.player_id!)?.pos ?? "Other";
+    (groups.get(pos) ?? groups.set(pos, []).get(pos)!).push(pick);
+  }
+  const ordered: TeamPositionGroup[] = [];
+  for (const pos of RESULTS_POS_ORDER) {
+    const picks = groups.get(pos);
+    if (picks) {
+      ordered.push({ pos, picks });
+      groups.delete(pos);
+    }
+  }
+  for (const [pos, picks] of groups) ordered.push({ pos, picks });
+  return ordered;
+}

@@ -1,7 +1,8 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useRef, type CSSProperties } from "react";
 import { useDraftData } from "@/lib/useDraftData";
+import { useDragScroll } from "@/lib/useDragScroll";
 import type { DraftPick, Player, Team } from "@/lib/types";
 
 function tileContent(pick: DraftPick | undefined, player: Player | undefined, isOnClock: boolean, teamName: string) {
@@ -28,6 +29,8 @@ function tileContent(pick: DraftPick | undefined, player: Player | undefined, is
 
 export function BoardGrid({ onOpenRound }: { onOpenRound: (round: number, focusOverall: number) => void }) {
   const { teams, players, draftPicks, onClockPick, leagueSettings } = useDraftData();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useDragScroll(scrollRef);
   const orderedTeams = [...teams].sort((a, b) => a.sort_order - b.sort_order);
   const totalRounds = leagueSettings?.total_rounds ?? 15;
   const playersById = new Map(players.map((p) => [p.id, p]));
@@ -39,7 +42,7 @@ export function BoardGrid({ onOpenRound }: { onOpenRound: (round: number, focusO
   const minWidth = Math.max(900, 64 + orderedTeams.length * 120);
 
   return (
-    <div className="board-scroll">
+    <div className="board-scroll" ref={scrollRef}>
       <div className="board-grid" style={{ ...gridStyle, minWidth }}>
         <div className="board-cols-header">
           <div className="col-head corner"></div>

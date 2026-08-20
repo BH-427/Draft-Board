@@ -11,6 +11,7 @@ import { TeamOwnersCard } from "./TeamOwnersCard";
 import { RosterRequirementsCard } from "./RosterRequirementsCard";
 import { WalkUpMusicCard } from "./WalkUpMusicCard";
 import { RankingsUploadCard } from "./RankingsUploadCard";
+import { ResetDraftCard } from "./ResetDraftCard";
 
 export function AdminTab() {
   const { isAdmin } = useDraftData();
@@ -36,6 +37,7 @@ export function AdminTab() {
         <RosterRequirementsCard />
         <WalkUpMusicCard />
         <RankingsUploadCard />
+        <ResetDraftCard />
       </div>
     </div>
   );

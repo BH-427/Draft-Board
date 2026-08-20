@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { useDraftData } from "@/lib/useDraftData";
+import { useDragScroll } from "@/lib/useDragScroll";
 
 export function RoundOverlay({
   round,
@@ -14,7 +15,7 @@ export function RoundOverlay({
 }) {
   const { teams, players, draftPicks, onClockPick } = useDraftData();
   const carouselRef = useRef<HTMLDivElement>(null);
-  const dragState = useRef({ isDown: false, startX: 0, scrollLeft: 0 });
+  useDragScroll(carouselRef);
 
   const playersById = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
@@ -30,29 +31,6 @@ export function RoundOverlay({
     const el = carouselRef.current?.querySelector<HTMLElement>(`[data-overall="${currentOverall}"]`);
     el?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   }, [currentOverall, round]);
-
-  useEffect(() => {
-    const el = carouselRef.current;
-    if (!el) return;
-    const onDown = (e: MouseEvent) => {
-      dragState.current = { isDown: true, startX: e.pageX, scrollLeft: el.scrollLeft };
-    };
-    const onUp = () => {
-      dragState.current.isDown = false;
-    };
-    const onMove = (e: MouseEvent) => {
-      if (!dragState.current.isDown) return;
-      el.scrollLeft = dragState.current.scrollLeft - (e.pageX - dragState.current.startX);
-    };
-    el.addEventListener("mousedown", onDown);
-    window.addEventListener("mouseup", onUp);
-    window.addEventListener("mousemove", onMove);
-    return () => {
-      el.removeEventListener("mousedown", onDown);
-      window.removeEventListener("mouseup", onUp);
-      window.removeEventListener("mousemove", onMove);
-    };
-  }, []);
 
   return (
     <div className="round-overlay">

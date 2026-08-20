@@ -9,19 +9,23 @@ import { BoardTab } from "@/components/board/BoardTab";
 import { PlayersTab } from "@/components/players/PlayersTab";
 import { MyTeamTab } from "@/components/myteam/MyTeamTab";
 import { AdminTab } from "@/components/admin/AdminTab";
+import { ResultsTab } from "@/components/results/ResultsTab";
 import { PickModal } from "@/components/PickModal";
+import { DraftCompleteBanner } from "@/components/DraftCompleteBanner";
 import { MusicPlayer } from "@/components/MusicPlayer";
 
 export default function Home() {
-  const { loading, currentUser, isAdmin } = useDraftData();
+  const { loading, currentUser, isAdmin, leagueSettings, draftPicks, onClockPick } = useDraftData();
   const [activeTab, setActiveTab] = useState<TabKey>("board");
   const showAdmin = !!currentUser && isAdmin();
   const adminOnly = currentUser?.type === "admin"; // standalone Admin login — not a drafting team
+  const draftComplete = !!leagueSettings?.draft_started && draftPicks.length > 0 && !onClockPick;
 
   useEffect(() => {
     if (adminOnly) setActiveTab("admin");
     else if (activeTab === "admin" && !showAdmin) setActiveTab("board");
-  }, [activeTab, showAdmin, adminOnly]);
+    else if (activeTab === "results" && !draftComplete) setActiveTab("board");
+  }, [activeTab, showAdmin, adminOnly, draftComplete]);
 
   if (loading) {
     return (
@@ -39,6 +43,7 @@ export default function Home() {
         active={activeTab}
         onChange={setActiveTab}
         showAdmin={showAdmin}
+        showResults={draftComplete}
         adminOnly={adminOnly}
       />
       {!adminOnly && (
@@ -52,6 +57,11 @@ export default function Home() {
           <div className={`tab-panel ${activeTab === "myteam" ? "active" : ""}`}>
             <MyTeamTab />
           </div>
+          {draftComplete && (
+            <div className={`tab-panel ${activeTab === "results" ? "active" : ""}`}>
+              <ResultsTab />
+            </div>
+          )}
         </>
       )}
       {showAdmin && (
@@ -60,6 +70,7 @@ export default function Home() {
         </div>
       )}
       <PickModal />
+      <DraftCompleteBanner onViewResults={() => setActiveTab("results")} />
       <MusicPlayer />
     </>
   );

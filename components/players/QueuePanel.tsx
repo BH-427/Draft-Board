@@ -50,6 +50,11 @@ export function QueuePanel({ selectedQueueTeam }: { selectedQueueTeam: number | 
           By Position
         </button>
       </div>
+      <div className="empty-note" style={{ marginBottom: 14 }}>
+        No round preference set (or set to <b>BPA</b>)? Auto-draft takes your queue in the exact order you built it,
+        top to bottom — not by overall rank. Set a preference below for any round where you&apos;d rather it grab the
+        best available player at a position instead.
+      </div>
 
       {view === "total" ? (
         queue.length === 0 ? (

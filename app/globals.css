@@ -368,6 +368,10 @@ a {
 .board-scroll {
   overflow-x: auto;
   padding-bottom: 8px;
+  cursor: grab;
+}
+.board-scroll:active {
+  cursor: grabbing;
 }
 .board-grid {
   display: grid;
@@ -596,7 +600,10 @@ a {
   gap: 26px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding: 40px 0;
+  /* Horizontal padding equal to half the carousel width minus half a tile's
+     flex-basis (300px) — without it, tiles near the start/end of a round
+     can't physically scroll far enough to reach the viewport's center. */
+  padding: 40px calc(50% - 150px);
   cursor: grab;
   width: 100%;
 }
@@ -1026,10 +1033,10 @@ table.plist tbody tr:hover {
   align-self: flex-start;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: 19px;
+  font-size: 11px;
   letter-spacing: 0.5px;
-  padding: 5px 13px;
-  border-radius: 8px;
+  padding: 3px 9px;
+  border-radius: 6px;
   color: #0c1712;
   margin-bottom: 4px;
 }
@@ -1042,14 +1049,17 @@ table.plist tbody tr:hover {
   margin-bottom: 8px;
 }
 .slot .slot-name {
-  font-weight: 700;
-  font-size: 14px;
-  margin-top: 6px;
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 19px;
+  line-height: 1.15;
+  margin-top: 8px;
 }
 .slot .slot-name.open {
   color: var(--chalk-dim);
   font-weight: 500;
   font-style: italic;
+  font-size: 14px;
 }
 .slot .slot-team {
   font-family: var(--font-mono);
@@ -1711,24 +1721,25 @@ table.preview tbody td {
 .pm-pos {
   display: inline-block;
   font-family: var(--font-display);
-  font-size: 22px;
-  padding: 6px 18px;
-  border-radius: 10px;
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: 7px;
   color: #0c1712;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   letter-spacing: 1px;
 }
 .pm-name {
   font-family: var(--font-body);
   font-weight: 800;
-  font-size: 44px;
+  font-size: 48px;
   line-height: 1.1;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .pm-nfl {
   font-family: var(--font-mono);
-  font-size: 14px;
-  color: var(--chalk-dim);
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--chalk);
   letter-spacing: 1px;
 }
 .pm-close {
@@ -1891,5 +1902,119 @@ table.preview tbody td {
   }
   .rtile.current {
     transform: scale(1.1);
+  }
+}
+
+/* ---------- Results tab (end of draft) ---------- */
+.results-tab h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 26px;
+  color: var(--amber);
+  letter-spacing: 1px;
+  margin: 0;
+}
+.results-section {
+  margin-bottom: 40px;
+}
+.results-section h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 0.6px;
+  margin: 0;
+}
+.results-rosters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+.results-team-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.results-team-card h4 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 16px;
+  color: var(--amber);
+  margin: 0 0 10px 0;
+  letter-spacing: 0.5px;
+}
+.results-pos-group {
+  margin-bottom: 10px;
+}
+.results-pos-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--chalk-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.results-pos-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.results-pos-group li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  padding: 3px 0;
+}
+.results-player-name {
+  font-weight: 600;
+}
+.results-player-team {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--chalk-dim);
+}
+
+/* ---------- Printable results views ----------
+   Scoped ONLY to the two Results-tab views (Final Rosters / Full Draft
+   Board) — general printing was intentionally removed elsewhere in the app.
+   The html.printing-* class is toggled around window.print() in ResultsTab. */
+@media print {
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+  html.printing-rosters body *,
+  html.printing-board body * {
+    visibility: hidden;
+  }
+  html.printing-rosters #print-rosters,
+  html.printing-rosters #print-rosters *,
+  html.printing-board #print-board,
+  html.printing-board #print-board * {
+    visibility: visible;
+  }
+  html.printing-rosters #print-rosters,
+  html.printing-board #print-board {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  html.printing-rosters #print-rosters .board-toolbar button,
+  html.printing-board #print-board .board-toolbar button {
+    display: none;
+  }
+  html.printing-rosters .results-rosters-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  html.printing-rosters .results-team-card {
+    border: 1px solid #999;
+    padding: 8px 10px;
+    break-inside: avoid;
+  }
+  html.printing-board #print-board .board-scroll {
+    overflow: visible;
   }
 }

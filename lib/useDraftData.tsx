@@ -56,6 +56,8 @@ interface DraftDataValue {
     totalRounds: number;
   }) => Promise<void>;
   startDraft: () => Promise<void>;
+  resetBoard: () => Promise<void>;
+  resetForNewSeason: () => Promise<void>;
 
   // clock
   pauseClock: () => Promise<void>;
@@ -111,50 +113,84 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
   const playersRef = useRef(players);
   playersRef.current = players;
 
+  // Guards against out-of-order network responses: each refetch of a table is
+  // stamped with a sequence number, and a response is only applied if it's
+  // still the latest one issued for that table. Without this, an earlier
+  // request that happens to resolve after a newer one can briefly overwrite
+  // fresh state with a stale snapshot (e.g. a stale draft_state row with an
+  // old clock_started_at, which reads as "the clock already expired").
+  const refetchSeqRef = useRef<Record<string, number>>({});
+
   const refetch = useCallback(async (table: string) => {
+    const seq = (refetchSeqRef.current[table] = (refetchSeqRef.current[table] ?? 0) + 1);
+    const isCurrent = () => refetchSeqRef.current[table] === seq;
+
     switch (table) {
       case "league_settings": {
         const { data } = await supabase.from("league_settings").select("*").eq("id", 1).maybeSingle();
-        if (data) setLeagueSettings(data as LeagueSettings);
+        if (data && isCurrent()) setLeagueSettings(data as LeagueSettings);
         break;
       }
       case "teams": {
         const { data } = await supabase.from("teams").select("*").order("sort_order");
-        if (data) setTeams(data as Team[]);
+        if (data && isCurrent()) setTeams(data as Team[]);
         break;
       }
       case "players": {
         const { data } = await supabase.from("players").select("*").order("overall_rank");
-        if (data) setPlayers(data as Player[]);
+        if (data && isCurrent()) setPlayers(data as Player[]);
         break;
       }
       case "draft_picks": {
         const { data } = await supabase.from("draft_picks").select("*").order("overall");
-        if (data) setDraftPicks(data as DraftPick[]);
+        if (data && isCurrent()) setDraftPicks(data as DraftPick[]);
         break;
       }
       case "draft_state": {
         const { data } = await supabase.from("draft_state").select("*").eq("id", 1).maybeSingle();
-        if (data) setDraftState(data as DraftState);
+        if (data && isCurrent()) setDraftState(data as DraftState);
         break;
       }
       case "team_queue": {
         const { data } = await supabase.from("team_queue").select("*").order("sort_order");
-        if (data) setTeamQueueRows(data as TeamQueueItem[]);
+        if (data && isCurrent()) setTeamQueueRows(data as TeamQueueItem[]);
         break;
       }
       case "team_round_prefs": {
         const { data } = await supabase.from("team_round_prefs").select("*");
-        if (data) setTeamRoundPrefRows(data as TeamRoundPref[]);
+        if (data && isCurrent()) setTeamRoundPrefRows(data as TeamRoundPref[]);
         break;
       }
       case "team_music": {
         const { data } = await supabase.from("team_music").select("*");
-        if (data) setTeamMusicRows(data as TeamMusic[]);
+        if (data && isCurrent()) setTeamMusicRows(data as TeamMusic[]);
         break;
       }
     }
   }, []);
+
+  // A single pick triggers writes to 3 different tables (draft_picks, team_queue,
+  // draft_state) in quick succession, each firing its own realtime event. Refetching
+  // on every individual event causes the round view / clock to re-render and
+  // re-settle multiple times in a row. Coalescing same-table events that arrive
+  // within a short window into one refetch means the UI settles once per pick.
+  const REFETCH_DEBOUNCE_MS = 200;
+  const pendingTablesRef = useRef<Set<string>>(new Set());
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scheduleRefetch = useCallback(
+    (table: string) => {
+      pendingTablesRef.current.add(table);
+      if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+      flushTimerRef.current = setTimeout(() => {
+        const tables = Array.from(pendingTablesRef.current);
+        pendingTablesRef.current.clear();
+        flushTimerRef.current = null;
+        tables.forEach((t) => refetch(t));
+      }, REFETCH_DEBOUNCE_MS);
+    },
+    [refetch]
+  );
 
   useEffect(() => {
     const stored = window.localStorage.getItem(CURRENT_USER_KEY);
@@ -184,14 +220,14 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
 
     const channel = supabase
       .channel("draft-data-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "league_settings" }, () => refetch("league_settings"))
-      .on("postgres_changes", { event: "*", schema: "public", table: "teams" }, () => refetch("teams"))
-      .on("postgres_changes", { event: "*", schema: "public", table: "players" }, () => refetch("players"))
-      .on("postgres_changes", { event: "*", schema: "public", table: "draft_picks" }, () => refetch("draft_picks"))
-      .on("postgres_changes", { event: "*", schema: "public", table: "draft_state" }, () => refetch("draft_state"))
-      .on("postgres_changes", { event: "*", schema: "public", table: "team_queue" }, () => refetch("team_queue"))
-      .on("postgres_changes", { event: "*", schema: "public", table: "team_round_prefs" }, () => refetch("team_round_prefs"))
-      .on("postgres_changes", { event: "*", schema: "public", table: "team_music" }, () => refetch("team_music"))
+      .on("postgres_changes", { event: "*", schema: "public", table: "league_settings" }, () => scheduleRefetch("league_settings"))
+      .on("postgres_changes", { event: "*", schema: "public", table: "teams" }, () => scheduleRefetch("teams"))
+      .on("postgres_changes", { event: "*", schema: "public", table: "players" }, () => scheduleRefetch("players"))
+      .on("postgres_changes", { event: "*", schema: "public", table: "draft_picks" }, () => scheduleRefetch("draft_picks"))
+      .on("postgres_changes", { event: "*", schema: "public", table: "draft_state" }, () => scheduleRefetch("draft_state"))
+      .on("postgres_changes", { event: "*", schema: "public", table: "team_queue" }, () => scheduleRefetch("team_queue"))
+      .on("postgres_changes", { event: "*", schema: "public", table: "team_round_prefs" }, () => scheduleRefetch("team_round_prefs"))
+      .on("postgres_changes", { event: "*", schema: "public", table: "team_music" }, () => scheduleRefetch("team_music"))
       .subscribe();
 
     return () => {
@@ -277,8 +313,13 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
         .is("player_id", null)
         .select();
       if (error || !data || data.length === 0) return; // someone else already made this pick
-      await supabase.from("team_queue").delete().eq("player_id", playerId);
-      await advanceClockAfterPick(pick.overall);
+      // These two don't depend on each other — running them together halves the
+      // real-world time between the 3 writes a pick makes, which narrows the
+      // window where a burst of realtime events could otherwise cause flicker.
+      await Promise.all([
+        supabase.from("team_queue").delete().eq("player_id", playerId),
+        advanceClockAfterPick(pick.overall),
+      ]);
     },
     [advanceClockAfterPick]
   );
@@ -312,11 +353,12 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
       if (error) return { ok: false, error: error.message };
       if (!data || data.length === 0) return { ok: false, error: "That pick was just made — try again." };
 
-      await supabase.from("team_queue").delete().eq("player_id", playerId);
-
-      if (currentOnClock && currentOnClock.overall === targetPick.overall) {
-        await advanceClockAfterPick(targetPick.overall);
-      }
+      await Promise.all([
+        supabase.from("team_queue").delete().eq("player_id", playerId),
+        currentOnClock && currentOnClock.overall === targetPick.overall
+          ? advanceClockAfterPick(targetPick.overall)
+          : Promise.resolve(),
+      ]);
       return { ok: true };
     },
     [isAdmin, advanceClockAfterPick]
@@ -427,6 +469,65 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
         clock_paused: false,
         paused_remaining_seconds: null,
       })
+      .eq("id", 1);
+  }, [isAdmin]);
+
+  // The 12 flavor team names this app ships with — reused as the placeholder
+  // names for a fresh season, matching what a brand-new install seeds.
+  const SEASON_SEED_TEAM_NAMES = [
+    "Gridiron Ghosts",
+    "Blitz Brigade",
+    "Red Zone Renegades",
+    "Turf Titans",
+    "Hail Mary Heroes",
+    "Sack Attack",
+    "Pigskin Pirates",
+    "End Zone Elites",
+    "Fumble Force",
+    "Rushing Rebels",
+    "Deep Threats",
+    "Goal Line Gang",
+  ];
+
+  // Clears every pick and stops the clock, but leaves teams, draft order,
+  // roster requirements, league settings, and the player pool untouched —
+  // for re-running the same draft setup from scratch.
+  const resetBoard = useCallback(async () => {
+    if (!isAdmin()) return;
+    await supabase.from("draft_picks").update({ player_id: null, is_auto: false, made_at: null }).gt("id", 0);
+    await supabase.from("league_settings").update({ draft_started: false }).eq("id", 1);
+    await supabase
+      .from("draft_state")
+      .update({ on_clock_overall: null, clock_started_at: null, clock_paused: false, paused_remaining_seconds: null })
+      .eq("id", 1);
+  }, [isAdmin]);
+
+  // Full new-season reset: everything resetBoard does, plus teams are deleted
+  // and reseeded as 12 placeholders (owner emails, claimed status, and admin
+  // flags all reset with them). Deleting a team cascades to its draft_picks,
+  // team_queue, and team_round_prefs rows, so those clear automatically.
+  // Roster requirements, pick clock seconds, draft type, league name, and the
+  // uploaded player pool are all left alone — reused as-is next season.
+  const resetForNewSeason = useCallback(async () => {
+    if (!isAdmin()) return;
+    await supabase.from("teams").delete().gt("id", 0);
+    await supabase.from("teams").insert(
+      SEASON_SEED_TEAM_NAMES.map((name, i) => ({
+        name,
+        sort_order: i,
+        owner_email: null,
+        claimed: false,
+        claimed_at: null,
+        is_admin: false,
+      }))
+    );
+    await supabase
+      .from("league_settings")
+      .update({ draft_started: false, num_teams: SEASON_SEED_TEAM_NAMES.length })
+      .eq("id", 1);
+    await supabase
+      .from("draft_state")
+      .update({ on_clock_overall: null, clock_started_at: null, clock_paused: false, paused_remaining_seconds: null })
       .eq("id", 1);
   }, [isAdmin]);
 
@@ -578,6 +679,8 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     autoDraftOnClock,
     applyDraftOrderAndType,
     startDraft,
+    resetBoard,
+    resetForNewSeason,
     pauseClock,
     resumeClock,
     updateLeagueSettings,

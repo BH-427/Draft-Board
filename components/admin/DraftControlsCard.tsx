@@ -221,11 +221,13 @@ export function DraftControlsCard() {
         <div className="clock-seconds-row">
           <label className="field-label">Seconds per pick</label>
           <input
-            type="number"
-            min={5}
-            max={600}
+            type="text"
+            inputMode="numeric"
             value={leagueSettings?.pick_clock_seconds ?? 90}
-            onChange={(e) => updateLeagueSettings({ pick_clock_seconds: parseInt(e.target.value, 10) || 90 })}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/[^0-9]/g, "");
+              updateLeagueSettings({ pick_clock_seconds: digits === "" ? 0 : parseInt(digits, 10) });
+            }}
           />
         </div>
       </div>
