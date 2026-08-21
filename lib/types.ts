@@ -70,6 +70,7 @@ export interface TeamQueueItem {
   team_id: number;
   player_id: number;
   sort_order: number;
+  pos_sort_order: number;
 }
 
 export interface TeamRoundPref {

@@ -31,6 +31,7 @@ interface DraftDataValue {
   draftPicks: DraftPick[];
   draftState: DraftState | null;
   teamQueues: Record<number, TeamQueueItem[]>;
+  teamQueuesByPosition: Record<number, Record<string, TeamQueueItem[]>>;
   teamRoundPrefs: Record<number, TeamRoundPref[]>;
   teamMusic: Record<number, TeamMusic>;
   currentUser: CurrentUser;
@@ -74,6 +75,7 @@ interface DraftDataValue {
   addToQueue: (teamId: number, playerId: number) => Promise<void>;
   removeFromQueue: (teamId: number, playerId: number) => Promise<void>;
   reorderQueue: (teamId: number, orderedPlayerIds: number[]) => Promise<void>;
+  reorderQueueByPosition: (teamId: number, pos: string, orderedPlayerIds: number[]) => Promise<void>;
   setRoundPref: (teamId: number, round: number, pos: string) => Promise<void>;
 
   // players / CSV
@@ -395,7 +397,10 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     let chosenId: number | null = null;
 
     if (wantedPos) {
-      const queuedAtPos = queue.map((q) => playersById.get(q.player_id)).find((p) => p && !drafted.has(p.id) && p.pos === wantedPos);
+      const posQueue = teamQueueRowsRef.current
+        .filter((q) => q.team_id === pick.team_id && playersById.get(q.player_id)?.pos === wantedPos)
+        .sort((a, b) => a.pos_sort_order - b.pos_sort_order);
+      const queuedAtPos = posQueue.map((q) => playersById.get(q.player_id)).find((p) => p && !drafted.has(p.id));
       chosenId = queuedAtPos?.id ?? nextAvailablePlayer(playersRef.current, drafted, wantedPos)?.id ?? null;
     } else {
       const queuedAny = queue.map((q) => playersById.get(q.player_id)).find((p) => p && !drafted.has(p.id));
@@ -588,7 +593,13 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
   const addToQueue = useCallback(async (teamId: number, playerId: number) => {
     const existing = teamQueueRowsRef.current.filter((q) => q.team_id === teamId);
     const nextOrder = existing.length ? Math.max(...existing.map((q) => q.sort_order)) + 1 : 0;
-    await supabase.from("team_queue").insert({ team_id: teamId, player_id: playerId, sort_order: nextOrder });
+    const playersById = new Map(playersRef.current.map((p) => [p.id, p]));
+    const pos = playersById.get(playerId)?.pos;
+    const samePos = pos ? existing.filter((q) => playersById.get(q.player_id)?.pos === pos) : [];
+    const nextPosOrder = samePos.length ? Math.max(...samePos.map((q) => q.pos_sort_order)) + 1 : 0;
+    await supabase
+      .from("team_queue")
+      .insert({ team_id: teamId, player_id: playerId, sort_order: nextOrder, pos_sort_order: nextPosOrder });
   }, []);
 
   const removeFromQueue = useCallback(async (teamId: number, playerId: number) => {
@@ -600,6 +611,14 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     for (let i = 0; i < orderedPlayerIds.length; i++) {
       const row = list.find((q) => q.player_id === orderedPlayerIds[i]);
       if (row) await supabase.from("team_queue").update({ sort_order: i }).eq("id", row.id);
+    }
+  }, []);
+
+  const reorderQueueByPosition = useCallback(async (teamId: number, pos: string, orderedPlayerIds: number[]) => {
+    const list = teamQueueRowsRef.current.filter((q) => q.team_id === teamId);
+    for (let i = 0; i < orderedPlayerIds.length; i++) {
+      const row = list.find((q) => q.player_id === orderedPlayerIds[i]);
+      if (row) await supabase.from("team_queue").update({ pos_sort_order: i }).eq("id", row.id);
     }
   }, []);
 
@@ -641,6 +660,21 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     return map;
   }, [teamQueueRows]);
 
+  const teamQueuesByPosition = useMemo(() => {
+    const playersById = new Map(players.map((p) => [p.id, p]));
+    const map: Record<number, Record<string, TeamQueueItem[]>> = {};
+    for (const row of teamQueueRows) {
+      const pos = playersById.get(row.player_id)?.pos;
+      if (!pos) continue;
+      const teamMap = (map[row.team_id] ??= {});
+      (teamMap[pos] ??= []).push(row);
+    }
+    for (const teamMap of Object.values(map)) {
+      for (const rows of Object.values(teamMap)) rows.sort((a, b) => a.pos_sort_order - b.pos_sort_order);
+    }
+    return map;
+  }, [teamQueueRows, players]);
+
   const teamRoundPrefs = useMemo(() => {
     const map: Record<number, TeamRoundPref[]> = {};
     for (const row of teamRoundPrefRows) {
@@ -663,6 +697,7 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     draftPicks,
     draftState,
     teamQueues,
+    teamQueuesByPosition,
     teamRoundPrefs,
     teamMusic,
     currentUser,
@@ -691,6 +726,7 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     addToQueue,
     removeFromQueue,
     reorderQueue,
+    reorderQueueByPosition,
     setRoundPref,
     replacePlayerPool,
     uploadTeamMusic,
