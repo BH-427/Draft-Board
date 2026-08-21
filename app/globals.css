@@ -1764,6 +1764,99 @@ table.preview tbody td {
   }
 }
 
+/* ---------- Queue: set position priority order modal ---------- */
+.reorder-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 12, 10, 0.82);
+  backdrop-filter: blur(6px);
+  padding: 24px;
+}
+.reorder-modal {
+  position: relative;
+  background: var(--panel-2);
+  border: 2px solid var(--amber);
+  border-radius: 18px;
+  padding: 28px 28px 22px 28px;
+  width: 420px;
+  max-width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px var(--amber-dim);
+}
+.reorder-modal h4 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px 0;
+  padding-right: 24px;
+}
+.reorder-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--chalk-dim);
+  font-size: 16px;
+  cursor: pointer;
+}
+.reorder-modal-close:hover {
+  color: var(--amber);
+}
+.reorder-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+.reorder-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  cursor: pointer;
+  user-select: none;
+}
+.reorder-row:hover {
+  border-color: var(--amber);
+}
+.reorder-row.selected {
+  border-color: var(--amber);
+  background: var(--amber-dim);
+}
+.reorder-row .qname {
+  flex: 1;
+}
+.reorder-num {
+  font-family: var(--font-mono);
+  color: var(--chalk-dim);
+  width: 18px;
+  text-align: center;
+}
+.reorder-row.selected .reorder-num {
+  color: var(--amber);
+  font-weight: 700;
+}
+.reorder-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 /* ============================================================
    Mobile / tablet responsiveness (portrait + landscape)
    ============================================================ */
