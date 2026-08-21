@@ -618,7 +618,10 @@ export function DraftDataProvider({ children }: { children: React.ReactNode }) {
     const list = teamQueueRowsRef.current.filter((q) => q.team_id === teamId);
     for (let i = 0; i < orderedPlayerIds.length; i++) {
       const row = list.find((q) => q.player_id === orderedPlayerIds[i]);
-      if (row) await supabase.from("team_queue").update({ pos_sort_order: i }).eq("id", row.id);
+      if (row) {
+        const { error } = await supabase.from("team_queue").update({ pos_sort_order: i }).eq("id", row.id);
+        if (error) console.error("reorderQueueByPosition failed — is the pos_sort_order column migrated?", error);
+      }
     }
   }, []);
 
